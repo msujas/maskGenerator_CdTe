@@ -1,0 +1,1 @@
+A Jupyter Notebook for automatically generating masks for cosmic radation on a CdTe detector. Requires a series of images (~20) and filters by the standard deviation on each pixel.
