@@ -5,10 +5,8 @@ import numpy as np
 from glob import glob
 import os
 import matplotlib.pyplot as plt
+from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 
-def clearPyFAI_header(file):
-    x,y,e = np.loadtxt(file,unpack = True, comments = '#')
-    np.savetxt(file,np.array([x,y,e]).transpose(), '%.6f')
 
 poni = r'C:\Users\kenneth1a\Documents\beamlineData\a311189_pdf_2/Si_0_15tilt.poni'
 direc = r'C:\Users\kenneth1a\Documents\beamlineData\a311189_pdf_2/'
@@ -111,20 +109,21 @@ for root, dirs, files in os.walk(direc):
 
     poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
-    poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
+    array2d, tth, eta, e = poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
     clearPyFAI_header(outfile)
+    bubbleHeader(outfile_2d, array2d, tth, eta)
     if doGain:
-        avimGain = avim/gainArray
-        avimGain = np.where(gainArray <0, -1, avimGain)
+        avimGain = gainCorrection(avim,gainArray)
         imGain = fabio.cbfimage.CbfImage(avimGain)
         imGain.save(f'{root}/{avdir}/average_gainCorrected.cbf')
         outfileGC = f'{root}/{avdir}/xye/average_gainCorrected.xye'
         outfile_2dGC = outfileGC.replace('.xye','.edf')
         poni.integrate1d(data = avimGain, filename = outfileGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
             correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
-        poni.integrate2d(data = avimGain, filename = outfile_2dGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
+        array2d, tth, eta, e = poni.integrate2d(data = avimGain, filename = outfile_2dGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
+        bubbleHeader(outfile_2dGC, array2d, tth, eta)
         clearPyFAI_header(outfileGC)      
     median = np.median(dataset, axis = 2)
     stdev = np.std(dataset,axis = 2)

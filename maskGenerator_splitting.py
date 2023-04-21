@@ -6,18 +6,8 @@ import pyFAI
 import fabio
 import numpy as np
 from glob import glob
-import os, re
-
-
-
-def clearPyFAI_header(file):
-    array = np.loadtxt(file,comments = '#',unpack = True)
-    np.savetxt(file,array.transpose())
-    
-def gainCorrection(array,gainArray):
-    gainCorr = array/gainArray
-    gainCorr = np.where(gainArray < 0, -1, gainCorr)
-    return gainCorr
+import os
+from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 
 
 #direc = os.getcwd() # Current Directory
@@ -104,8 +94,7 @@ for i,files in enumerate(filesplit):
     im.save(f'{avdir}/average_{i}.cbf')
     
 
-    avimGain = avim/gainArray
-    avimGain = np.where(gainArray < 0, -1, avimGain)
+    avimGain = gainCorrection(avim,gainArray)
     imGain = fabio.cbfimage.CbfImage(avimGain)
     imGain.save(f'{avdir}/average_gainCorrected_{i}.cbf')
     
@@ -116,21 +105,21 @@ for i,files in enumerate(filesplit):
 
     poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                     correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
-    poni.integrate2d(data = avim, filename = outfile2d,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
+    pattern2d, tth, eta, e = poni.integrate2d(data = avim, filename = outfile2d,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                     correctSolidAngle = True, method = 'bbox',npt_rad = 5000, npt_azim = 360, error_model = 'poisson', safe = False)
-    
+    bubbleHeader(outfile2d, pattern2d, tth, eta)
     outfileGain = f'{avdir}/xye/average_gainCorrected_{i}.xye'
     outfileGain2d = outfileGain.replace('.xye','_pyfai.edf')
     mask_avGain = np.where(avimGain <0, 1, 0)
     poni.integrate1d(data = avimGain, filename = outfileGain,mask = mask_avGain,polarization_factor = 0.99,unit = '2th_deg',
                     correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
     
-    poni.integrate2d(data = avimGain, filename = outfileGain2d,mask = mask_avGain,polarization_factor = 0.99,unit = '2th_deg',
+    pattern2d, tth, eta, e = poni.integrate2d(data = avimGain, filename = outfileGain2d,mask = mask_avGain,polarization_factor = 0.99,unit = '2th_deg',
                     correctSolidAngle = True, method = 'bbox',npt_rad = 5000, npt_azim = 360, error_model = 'poisson', safe = False)
-
+    bubbleHeader(outfileGain2d, pattern2d, tth, eta,)
     clearPyFAI_header(outfile)
     clearPyFAI_header(outfileGain)
-    break
+    
     for c,file in enumerate(files):
         print(file)
         xyefile = file.replace('.cbf','.xye')
