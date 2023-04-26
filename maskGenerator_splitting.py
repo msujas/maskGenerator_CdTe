@@ -22,7 +22,7 @@ mask  = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap\minMask.edf'
 mask = fabio.open(mask).data
 poni  = fr'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap\Si\xrd/Si_700_dty_179.poni' # Poni file
 poni = pyFAI.load(poni)
-
+wavelength = poni.wavelength*10**10
 averaging = 20 #change this depending on how many you want to average
 nstdevs = 3 #change this to make pixel masking stricter or more lenient
 scale = 10**9 #scaling monitor normalised data 10^9 should be good but can be adjusted
@@ -152,6 +152,6 @@ for i,files in enumerate(filesplit):
     np.savetxt(f'{dest}/{subdir}/average/{xyefile}',np.array([x,av1d,eav]).transpose())
     np.savetxt(f'{dest}/{subdirGain}/average/{xyefile}',np.array([xg,av1dg,eavg]).transpose())
     
-    qav = av1d*4*np.pi*np.sin(x*np.pi/(180*2))/0.25509
+    qav = av1d*4*np.pi*np.sin(x*np.pi/(180*2))/wavelength
     np.savetxt(f'{dest}/{subdir}/average/qav_{i}.xy',np.array([x,qav]).transpose())
     
