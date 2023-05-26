@@ -3,15 +3,15 @@ import pyFAI
 import fabio
 import numpy as np
 from glob import glob
-import os
+import os, re
 import matplotlib.pyplot as plt
 from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 
 
-poni = r'C:\Users\kenneth1a\Documents\beamlineData\a311189_pdf_2/Si_0_15tilt.poni'
-direc = r'C:\Users\kenneth1a\Documents\beamlineData\a311189_pdf_2/'
-mask = r'C:\Users\kenneth1a\Documents\beamlineData\a311189_pdf_2/dtx0_dtr15_baseMask_lines.edf'
-gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\March2023_gainMap/calculatedGainMap_48p6keV_filtered_kpm_2023-04-14.edf'
+poni = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\Si00_tilt/pos05.poni'
+direc = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\measurements'
+mask = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\Si00_tilt\pos05_mask.edf'
+gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\compare/afterRestart_solidAngle.edf'
 #gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap/calculatedGainMap_48p6keV_2023-02-21_2.edf'
 #gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap/calculatedGainMap_48p6keV_filtered_kpm_2023-04-13.edf'
 os.chdir(direc)
@@ -19,7 +19,7 @@ mask = fabio.open(mask).data
 poni = pyFAI.load(poni)
 
 
-avdir = 'average_2'
+avdir = 'average'
 stdevs = 3
 scale = 1e9
 doMonitor = True
@@ -103,10 +103,12 @@ for root, dirs, files in os.walk(direc):
     avim = np.where(np.isnan(avim), -2, avim)
     im = fabio.cbfimage.CbfImage(avim)
     im.save(f'{root}/{avdir}/average.cbf')
-    outfile = f'{root}/{avdir}/xye/average.xye'
-    outfile_2d = outfile.replace('.xye','_pyfai.edf')
-    mask_av = np.where(avim < 0, 1, 0)
 
+    mask_av = np.where(avim < 0, 1, 0)
+    basefilename = os.path.basename(cbfs[-1])
+    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
+    outfile = f'{root}/{avdir}/xye/{shortbasename}_average.xye'
+    outfile_2d = outfile.replace('.xye','_pyfai.edf')
     poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
     array2d, tth, eta, e = poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
@@ -117,7 +119,7 @@ for root, dirs, files in os.walk(direc):
         avimGain = gainCorrection(avim,gainArray)
         imGain = fabio.cbfimage.CbfImage(avimGain)
         imGain.save(f'{root}/{avdir}/average_gainCorrected.cbf')
-        outfileGC = f'{root}/{avdir}/xye/average_gainCorrected.xye'
+        outfileGC = f'{root}/{avdir}/xye/{shortbasename}_average_gainCorrected.xye'
         outfile_2dGC = outfileGC.replace('.xye','.edf')
         poni.integrate1d(data = avimGain, filename = outfileGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
             correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
