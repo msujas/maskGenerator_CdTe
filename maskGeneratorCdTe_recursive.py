@@ -117,13 +117,14 @@ for root, dirs, files in os.walk(direc):
     bubbleHeader(outfile_2d, array2d, tth, eta)
     if doGain:
         avimGain = gainCorrection(avim,gainArray)
+        mask_av_gain = np.where(avimGain < 0, 1, 0)
         imGain = fabio.cbfimage.CbfImage(avimGain)
-        imGain.save(f'{outfolder}/{avdir}/average_gainCorrected.cbf')
+        imGain.save(f'{outfolder}/{avdir}/{shortbasename}_average_gainCorrected.cbf')
         outfileGC = f'{outfolder}/{avdir}/xye/{shortbasename}_average_gainCorrected.xye'
         outfile_2dGC = outfileGC.replace('.xye','.edf')
-        poni.integrate1d(data = avimGain, filename = outfileGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
+        poni.integrate1d(data = avimGain, filename = outfileGC,mask = mask_av_gain,polarization_factor = 0.99,unit = '2th_deg',
             correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
-        array2d, tth, eta, e = poni.integrate2d(data = avimGain, filename = outfile_2dGC,mask = mask_av,polarization_factor = 0.99,unit = '2th_deg',
+        array2d, tth, eta, e = poni.integrate2d(data = avimGain, filename = outfile_2dGC,mask = mask_av_gain,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
         bubbleHeader(outfile_2dGC, array2d, tth, eta)
         clearPyFAI_header(outfileGC)      
