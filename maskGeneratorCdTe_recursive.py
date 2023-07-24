@@ -11,8 +11,6 @@ poni = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\Si00_tilt/pos05.poni'
 direc = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\measurements'
 mask = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\Si00_tilt\pos05_mask.edf'
 gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\compare/afterRestart_solidAngle.edf'
-#gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap/calculatedGainMap_48p6keV_2023-02-21_2.edf'
-#gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap/calculatedGainMap_48p6keV_filtered_kpm_2023-04-13.edf'
 dest = direc
 
 os.chdir(direc)
@@ -29,7 +27,7 @@ if doGain:
     gainArray = fabio.open(gainFile).data
 
 for root, dirs, files in os.walk(direc):
-    if avdir in root:
+    if avdir in root or 'badFrames' in root:
         continue
     os.chdir(root)
     cbfs = glob('*.cbf')
@@ -133,4 +131,4 @@ for root, dirs, files in os.walk(direc):
     stdev = np.std(dataset,axis = 2)
     av1d = np.average(av1d,axis=1)
     eav = np.average(eav,axis = 1)
-    np.savetxt(f'{subdir}/{avdir}/{xyefile}',np.array([x,av1d,eav]).transpose())
+    np.savetxt(f'{outfolder}/{subdir}/{avdir}/{xyefile}',np.array([x,av1d,eav]).transpose())
