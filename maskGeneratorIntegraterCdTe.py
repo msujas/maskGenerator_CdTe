@@ -1,21 +1,20 @@
 import pyFAI
 import fabio
 import numpy as np
-import matplotlib.pyplot as plt
 from glob import glob
 import os, re
 from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 
 
-direc = r'X:\staff\july2023\gunther\SiO2_4\xrd/' # Directory of xrd files
+direc = r'X:\staff\july2023\Julian\S22\xrd/' # Directory of xrd files
 os.chdir(direc)
 
 dest = direc.replace(r'X:\staff\july2023',r'C:\Users\kenneth1a\Documents\beamlineData\July2023')
-#dest = direc.replace(r'X:\users\a311205',r'Z:\visitor\a311205\bm31\20230703\pylatus' )
+
 if not os.path.exists(dest):
     os.makedirs(dest)
 
-mask  = r'Z:\bm31\inhouse\july2023/pdf_baseMask_tilt.edf' # Mask file
+mask  = r'Z:\bm31\inhouse\july2023/pdf_baseMask_tilt2.edf' # Mask file
 mask = fabio.open(mask).data
 poni  = r'Z:\bm31\inhouse\july2023/Si_15tilt_0p25579A.poni' # Poni file
 poni = pyFAI.load(poni)
@@ -23,8 +22,9 @@ wavelength = poni.wavelength*10**10
 gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\July2023\gainmap\calculatedGainMap_48p6keV_filtered_kpm_2023-07-21.edf'
 
 gainArray = fabio.open(gainFile).data
-
-
+badFramesLog = f'{dest}/badFrames.txt'
+if os.path.isfile(badFramesLog):
+    os.remove(badFramesLog)
 files = glob('*.cbf')
 i1 = fabio.open(files[0]).data
 dataset = np.empty(shape = (*i1.shape,len(files)))
@@ -35,17 +35,27 @@ doMonitor = True
 #monitor = np.loadtxt(monitorfile,usecols = 2, skiprows = 1)
 
 scale = 10**9
+usedFiles = []
 for c,file in enumerate(files):
     
     array = fabio.open(file).data
     if doMonitor:
-        fileheader = fabio.open(file).header["_array_data.header_contents"].split('\r\n#')
+        fileheader = fabio.open(file).header["_array_data.header_contents"].split('\r\n# ')
         monitor = int([item for item in fileheader if 'Flux' in item][0].replace('Flux',''))
+        exptime = float([item for item in fileheader if 'Exposure_period' in item][0].split()[1])
+        if monitor <= 100:
+            f = open(badFramesLog,'a')
+            f.write(f'{file}\n')
+            f.close()
+            print(f'{file} low flux, not including in averaging')
+            dataset = dataset[:,:,:-1]
+            continue
+            
         array = (array/monitor)*scale
-
+        
     else:
         array = array*1000 #multiply by 1000 as 10^6 is common monitor value
-
+    usedFiles.append(file)
     dataset[:,:,c] = array
     
 average = np.average(dataset,axis=2)
@@ -54,10 +64,10 @@ stdev = np.std(dataset,axis = 2)
 
 maskdct = {}
 nstdevs = 3
-for c in range(len(files)):
+print('creating masks')
+for c,file in enumerate(usedFiles):
     print(files[c])
     array = dataset[:,:,c]
-    vmax = np.percentile(np.where(np.isnan(array),0,array),99.5)
     maskdct[c] = np.where(array > median+nstdevs*stdev,1,mask)
 
 subdir = f'xye_{nstdevs}stdevs/'
@@ -70,6 +80,7 @@ shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf',
 if not os.path.exists(f'{dest}/average/xye/'):
     os.makedirs(f'{dest}/average/xye/')
 
+print('making and integrating average images')
 dataset2 = np.empty(shape = dataset.shape)
 for n in maskdct:
     dataset2[:,:,n] = np.where(maskdct[n] == 0, dataset[:,:,n], np.nan)
@@ -97,7 +108,7 @@ bubbleHeader(outfile_2d,*result[:3])
 outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
 poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt = 5000, error_model = 'poisson', safe = False)
-outfileGC_2d = outfileGC.replace('.xye','_pyfai.edf')
+outfileGC_2d = outfileGC.replace('.xye','.edf')
 result = poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = 0.99,unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
 clearPyFAI_header(outfile)
@@ -109,7 +120,9 @@ if not os.path.exists(f'{dest}/{subdir}/average/'):
     os.makedirs(f'{dest}/{subdir}/average/')
 if not os.path.exists(f'{dest}/{subdirGain}/average/'):
     os.makedirs(f'{dest}/{subdirGain}/average/')  
-for c,file in enumerate(files):
+
+print('integrating individual images')
+for c,file in enumerate(usedFiles):
     print(file)
     xyefile = file.replace('.cbf','.xye')
     outputfile = f'{dest}/{subdir}/{xyefile}'
