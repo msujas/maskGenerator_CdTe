@@ -57,7 +57,7 @@ for root, dirs, files in os.walk(direc):
 
     masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
     integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainArray= gainArray, maskdct= masks)
-    integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir,  poni = poni, maskdct= masks, 
+    integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                         gainArray=gainArray)
     
      
