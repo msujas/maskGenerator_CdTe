@@ -141,6 +141,8 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainArray, a
 
     integrates each image in dataset with it's own mask, with and without gain correction, then averages the integrated patterns at the end.
     '''
+    while subdir[-1] == '/' or subdir[-1] == '\\':
+        subdir = subdir[:-1]
     subdirGain = f'{subdir}_gainCorr'
     wavelength = poni.wavelength*10**10
     if not os.path.exists(f'{dest}/{subdir}/{avdir}/'):
