@@ -46,7 +46,6 @@ nstdevs = 3
 maskdct = makeMasks(dataset, usedFiles, baseMask = mask, nstdevs = nstdevs)
 
 subdir = f'xye_{nstdevs}stdevs/'
-subdirGain = f'xye_{nstdevs}stdevs_gainCorrected/'
 
 
 if not os.path.exists(f'{dest}/average/xye/'):

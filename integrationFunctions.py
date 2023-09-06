@@ -25,14 +25,25 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
     usedFiles = []
     i1 = fabio.open(files[0]).data
     dataset = np.empty(shape = (*i1.shape,len(files)))
-    for c,file in enumerate(files):
-
-        array = fabio.open(file).data
+    count = 0
+    for file in files:
+        try:
+            array = fabio.open(file).data
+        except ValueError as e:
+            if 'could not convert string to float:' in str(e):
+                f = open(badFramesLog,'a')
+                f.write(f'{file}\n')
+                f.close()
+                print(f'{file} flux not recorded, not including in averaging')
+                dataset = dataset[:,:,:-1]
+                continue            
         if doMonitor:
             try:
                 fileheader = fabio.open(file).header["_array_data.header_contents"].split('\r\n#')
                 monitor = int([item for item in fileheader if 'Flux' in item][0].replace('Flux',''))
-                if monitor <= 100:
+                exposure = float([item for item in fileheader if 'Exposure_time' in item][0].split()[-2])
+
+                if monitor <= 1000*exposure:
                     f = open(badFramesLog,'a')
                     f.write(f'{file}\n')
                     f.close()
@@ -40,12 +51,18 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
                     dataset = dataset[:,:,:-1]
                     continue
             except:
+                f = open(badFramesLog,'a')
+                f.write(f'{file}\n')
+                f.close()
+                print(f'{file} flux not recorded, not including in averaging')
+                dataset = dataset[:,:,:-1]
                 continue
             array = (array/monitor)*scale
         else:
             array = array*1000 #multiply by 1000 as 10^6 is common monitor value
-        dataset[:,:,c] = array
+        dataset[:,:,count] = array
         usedFiles.append(file)
+        count += 1
             
     return dataset, usedFiles
 
