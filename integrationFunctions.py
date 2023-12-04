@@ -2,6 +2,7 @@ import fabio
 import numpy as np
 import matplotlib.pyplot as plt
 import os, re
+from cryio.cbfimage import CbfImage
 
 def gainCorrection(avim,gainArray):
     avimGain = avim/gainArray
@@ -27,6 +28,9 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
     dataset = np.empty(shape = (*i1.shape,len(files)))
     count = 0
     for file in files:
+        cbf = CbfImage(file)
+        array = cbf.array
+        header = cbf.header
         try:
             array = fabio.open(file).data
         except ValueError as e:
@@ -39,9 +43,9 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
                 continue            
         if doMonitor:
             try:
-                fileheader = fabio.open(file).header["_array_data.header_contents"].split('\r\n#')
-                monitor = int([item for item in fileheader if 'Flux' in item][0].replace('Flux',''))
-                exposure = float([item for item in fileheader if 'Exposure_time' in item][0].split()[-2])
+                #header = CbfHeader(file).header
+                monitor = header['Flux']
+                exposure = header['Exposure_time']
 
                 if monitor <= 1000*exposure:
                     f = open(badFramesLog,'a')
