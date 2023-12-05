@@ -31,7 +31,6 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
 
 
     poni = pyFAI.load(poni)
-    wavelength = poni.wavelength*10**10
    
     nstdevs = 3 #change this to make pixel masking stricter or more lenient
     scale = 10**9 #scaling monitor normalised data 10^9 should be good but can be adjusted
@@ -52,8 +51,8 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
             print(f'{f} flux not recorded, not including in averaging')
             appendBadFrames(badFramesLog,f)
             continue
-        exposure = CbfHeader(file)['Exposure_time']
-        if mointor < exposure * 1000:
+        exposure = CbfHeader(f)['Exposure_time']
+        if monitor < exposure * 1000:
             print(f'{f} low flux, not including in averaging')
             appendBadFrames(badFramesLog,f)
             continue
