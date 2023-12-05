@@ -51,19 +51,15 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
 
     dataset = np.empty(shape = (*i1.shape,len(usedFiles)))
 
-    for file,monitor in zip(usedFiles,monitors):
+    for count,(file,monitor) in enumerate(zip(usedFiles,monitors)):
         cbf = CbfImage(file)
         array = cbf.array
-
-         
         if doMonitor:
             array = (array/monitor)*scale
         else:
             array = array*1000 #multiply by 1000 as 10^6 is common monitor value
         dataset[:,:,count] = array
         usedFiles.append(file)
-        count += 1
-            
     return dataset, usedFiles
 
 def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
