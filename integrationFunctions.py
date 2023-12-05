@@ -2,7 +2,7 @@ import fabio
 import numpy as np
 import matplotlib.pyplot as plt
 import os, re
-from cryio.cbfimage import CbfImage
+from cryio.cbfimage import CbfImage, CbfHeader
 
 def gainCorrection(avim,gainArray):
     avimGain = avim/gainArray
@@ -22,35 +22,41 @@ def bubbleHeader(file2d,array2d, tth, eta):
 
     f.write(file2d)
 
+def appendBadFrames(badFramesLog,file):
+        f = open(badFramesLog,'a')
+        f.write(f'{file}\n')
+        f.close()
+
 def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = True):
     usedFiles = []
+    monitors = []
     i1 = fabio.open(files[0]).data
-    dataset = np.empty(shape = (*i1.shape,len(files)))
+    
     count = 0
     for file in files:
+        header = CbfHeader(file)
+        try:
+            monitor = header['Flux']
+        except:
+            print(f'{file} flux not recorded, not including in averaging')
+            appendBadFrames(badFramesLog,file)
+            continue
+        exposure = header['Exposure_time']
+        if monitor < 1000 * exposure:
+            print(f'{file} low flux, not including in averaging')
+            appendBadFrames(badFramesLog,file)
+            continue
+        usedFiles.append(file)
+        monitors.append(monitor)
+
+    dataset = np.empty(shape = (*i1.shape,len(usedFiles)))
+
+    for file,monitor in zip(usedFiles,monitors):
         cbf = CbfImage(file)
         array = cbf.array
-        header = cbf.header
+
          
         if doMonitor:
-            try:
-                monitor = header['Flux']
-                exposure = header['Exposure_time']
-
-                if monitor <= 1000*exposure:
-                    f = open(badFramesLog,'a')
-                    f.write(f'{file}\n')
-                    f.close()
-                    print(f'{file} low flux, not including in averaging')
-                    dataset = dataset[:,:,:-1]
-                    continue
-            except:
-                f = open(badFramesLog,'a')
-                f.write(f'{file}\n')
-                f.close()
-                print(f'{file} flux not recorded, not including in averaging')
-                dataset = dataset[:,:,:-1]
-                continue
             array = (array/monitor)*scale
         else:
             array = array*1000 #multiply by 1000 as 10^6 is common monitor value

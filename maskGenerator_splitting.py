@@ -7,7 +7,8 @@ import fabio
 import numpy as np
 from glob import glob
 import os
-from integrationFunctions import makeDataSet, makeMasks, integrateAverage, integrateIndividual
+from cryio.cbfimage import CbfHeader
+from integrationFunctions import makeDataSet, makeMasks, integrateAverage, integrateIndividual, appendBadFrames
 
 
 #direc = os.getcwd() # Current Directory
@@ -39,18 +40,31 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
     files.sort()
     filesplit = []
     n = -1
-
-    for c,f in enumerate(files):
-        if c%averaging == 0:
+    count = 0
+    badFramesLog = f'{dest}/badFrames.log'
+    for f in files:
+        if count%averaging == 0:
             filesplit.append([])
             n += 1
+        try:
+            monitor = CbfHeader(f)['Flux']
+        except:
+            print(f'{f} flux not recorded, not including in averaging')
+            appendBadFrames(badFramesLog,f)
+            continue
+        exposure = CbfHeader(file)['Exposure_time']
+        if mointor < exposure * 1000:
+            print(f'{f} low flux, not including in averaging')
+            appendBadFrames(badFramesLog,f)
+            continue
         filesplit[n].append(f)
+        count += 1
             
     gainArray = fabio.open(gainFile).data
     mask = fabio.open(mask).data
     subdir = f'xye_{nstdevs}stdevs_{averaging}/'
 
-    badFramesLog = f'{dest}/badFrames.log'
+    
     for i,files in enumerate(filesplit):
         
         dataset, usedFiles = makeDataSet(files, badFramesLog, scale = scale, doMonitor = True)
