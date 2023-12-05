@@ -31,19 +31,10 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
         cbf = CbfImage(file)
         array = cbf.array
         header = cbf.header
-        try:
-            array = fabio.open(file).data
-        except ValueError as e:
-            if 'could not convert string to float:' in str(e):
-                f = open(badFramesLog,'a')
-                f.write(f'{file}\n')
-                f.close()
-                print(f'{file} flux not recorded, not including in averaging')
-                dataset = dataset[:,:,:-1]
-                continue            
+        array = fabio.open(file).data
+         
         if doMonitor:
             try:
-                #header = CbfHeader(file).header
                 monitor = header['Flux']
                 exposure = header['Exposure_time']
 
@@ -87,7 +78,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
-def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99):
+def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, fileAppend = ''):
     '''
     arguments: dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
@@ -105,7 +96,7 @@ def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th
     no returned variable
     '''
     basefilename = os.path.basename(files[-1])
-    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
+    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p',fileAppend,basefilename).replace('.cbf','')
 
     if not os.path.exists(f'{dest}/average/xye/'):
         os.makedirs(f'{dest}/average/xye/')
