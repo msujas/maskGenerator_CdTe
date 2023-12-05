@@ -59,7 +59,6 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
         else:
             array = array*1000 #multiply by 1000 as 10^6 is common monitor value
         dataset[:,:,count] = array
-        usedFiles.append(file)
     return dataset, usedFiles
 
 def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
