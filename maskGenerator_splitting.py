@@ -50,12 +50,10 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
     mask = fabio.open(mask).data
     subdir = f'xye_{nstdevs}stdevs_{averaging}/'
 
-
-
-    badFramesLog = 'badFrames.log'
+    badFramesLog = f'{dest}/badFrames.log'
     for i,files in enumerate(filesplit):
         
-        dataset, usedFiles = makeDataSet(files, badFramesLog, scale = 10**9, doMonitor = True)
+        dataset, usedFiles = makeDataSet(files, badFramesLog, scale = scale, doMonitor = True)
             
         maskdct = makeMasks(dataset, usedFiles, mask, nstdevs = 3, plot = False)
         

@@ -31,7 +31,6 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
         cbf = CbfImage(file)
         array = cbf.array
         header = cbf.header
-        array = fabio.open(file).data
          
         if doMonitor:
             try:
