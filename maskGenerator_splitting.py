@@ -75,7 +75,7 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
         maskdct = makeMasks(dataset, usedFiles, mask, nstdevs = 3, plot = False)
         print('integrating average image')
         integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, 
-                         fileAppend = f'_{i:04d}')
+                         shortbasename=files[-1].replace('.cbf',''))
         print('integrating individual images')
         integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray, avdir = 'average', unit = '2th_deg', 
                             npt = 5000, polF = 0.99)

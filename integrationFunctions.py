@@ -78,7 +78,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
-def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, fileAppend = ''):
+def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
     '''
     arguments: dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
@@ -95,8 +95,9 @@ def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th
     creates and average image, with each image masked individually. Integrates the average with and without gain correction
     no returned variable
     '''
-    basefilename = os.path.basename(files[-1])
-    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p',fileAppend,basefilename).replace('.cbf','')
+    if shortbasename == None:
+        basefilename = os.path.basename(files[-1])
+        shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
 
     if not os.path.exists(f'{dest}/average/xye/'):
         os.makedirs(f'{dest}/average/xye/')
@@ -153,6 +154,7 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainArray, a
 
     integrates each image in dataset with it's own mask, with and without gain correction, then averages the integrated patterns at the end.
     '''
+
     while subdir[-1] == '/' or subdir[-1] == '\\':
         subdir = subdir[:-1]
     subdirGain = f'{subdir}_gainCorr'
