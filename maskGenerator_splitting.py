@@ -12,8 +12,8 @@ from integrationFunctions import makeDataSet, makeMasks, integrateAverage, integ
 
 
 #direc = os.getcwd() # Current Directory
-direc = r'X:\users\a311207\20230412\Basset_lfp2\xrd/' # Directory of xrd files
-dest = direc.replace(r'X:\users\a311207\20230412',r'Z:\visitor\a311207\bm31\20231204\pylatus')
+direc = r'X:\users\a311207\20231204\Basset_lfp2\xrd/' # Directory of xrd files
+dest = direc.replace(r'X:\users\a311207\20231204',r'Z:\visitor\a311207\bm31\20231204\pylatus')
 
 poni = r'Z:\visitor\a311207\bm31\20231204\pylatus/Si000_15tilt.poni'
 mask = r'Z:\visitor\a311207\bm31\20231204\pylatus\pdf_baseMask_tilt.edf'
@@ -38,9 +38,13 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
     files = glob('*.cbf')
     files.sort()
     filesplit = []
+    badFramesLog = f'{dest}/badFrames.log'
+    if os.path.exists(badFramesLog):
+        os.remove(badFramesLog)
+        
+    print('splitting files')
     n = -1
     count = 0
-    badFramesLog = f'{dest}/badFrames.log'
     for f in files:
         if count%averaging == 0:
             filesplit.append([])
@@ -65,14 +69,14 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
 
     
     for i,files in enumerate(filesplit):
-        
+        print('making dataset')
         dataset, usedFiles = makeDataSet(files, badFramesLog, scale = scale, doMonitor = True)
             
         maskdct = makeMasks(dataset, usedFiles, mask, nstdevs = 3, plot = False)
-        
+        print('integrating average image')
         integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, 
                          fileAppend = f'_{i:04d}')
-        
+        print('integrating individual images')
         integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray, avdir = 'average', unit = '2th_deg', 
                             npt = 5000, polF = 0.99)
         
