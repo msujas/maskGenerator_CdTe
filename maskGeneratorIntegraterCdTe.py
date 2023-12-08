@@ -52,7 +52,7 @@ if not os.path.exists(f'{dest}/average/xye/'):
     os.makedirs(f'{dest}/average/xye/')
 
 print('\nmaking and integrating average images\n')
-integrateAverage(dataset, usedFiles, poni, gainArray, maskdct, dest)
+integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct)
 print('\nintegrating individual images\n')
 integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray)
 
