@@ -71,7 +71,7 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
     for i,files in enumerate(filesplit):
         print('making dataset')
         dataset, usedFiles = makeDataSet(files, badFramesLog, scale = scale, doMonitor = True)
-            
+        print('making masks')
         maskdct = makeMasks(dataset, usedFiles, mask, nstdevs = 3, plot = False)
         print('integrating average image')
         integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, 

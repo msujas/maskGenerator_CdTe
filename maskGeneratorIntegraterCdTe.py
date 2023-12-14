@@ -6,53 +6,43 @@ import os, re
 from integrationFunctions import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
 
 
-direc = r'X:\staff\july2023\Julian\S22\xrd/' # Directory of xrd files
-os.chdir(direc)
+direc = r'X:\users\a311207\20231204\air2\xrd/' # Directory of xrd files
+dest = direc.replace(r'X:\users\a311207\20231204',r'Z:\visitor\a311207\bm31\20231204\pylatus')
+poni  = r'Z:\visitor\a311207\bm31\20231204\pylatus/Si000_15tilt.poni' # Poni file
+mask  = r'Z:\visitor\a311207\bm31\20231204\pylatus/pdf_baseMask_tilt.edf' # Mask file
+gainFile = r'Z:\visitor\a311207\bm31\20231204\pylatus\calculatedGainMap_48p6keV_filtered_kpm_2023-12-11.edf'
 
-dest = direc.replace(r'X:\staff\july2023',r'C:\Users\kenneth1a\Documents\beamlineData\July2023')
+def run(direc,dest,poni,mask,gainFile):
+    os.chdir(direc)
+    if not os.path.exists(dest):
+        os.makedirs(dest)
 
-if not os.path.exists(dest):
-    os.makedirs(dest)
+    mask = fabio.open(mask).data
+    poni = pyFAI.load(poni)
+    gainArray = fabio.open(gainFile).data
+    badFramesLog = f'{dest}/badFrames.txt'
+    if os.path.isfile(badFramesLog):
+        os.remove(badFramesLog)
 
-mask  = r'Z:\bm31\inhouse\july2023/pdf_baseMask_tilt2.edf' # Mask file
-mask = fabio.open(mask).data
-poni  = r'Z:\bm31\inhouse\july2023/Si_15tilt_0p25579A.poni' # Poni file
-poni = pyFAI.load(poni)
-wavelength = poni.wavelength*10**10
-gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\July2023\gainmap\calculatedGainMap_48p6keV_filtered_kpm_2023-07-21.edf'
+    files = glob('*.cbf')
 
-gainArray = fabio.open(gainFile).data
+    doMonitor = True
+    scale = 10**9
+    dataset, usedFiles = makeDataSet(files,badFramesLog,scale,doMonitor)
+    print('\ncreating masks\n')
+    nstdevs = 3
+    maskdct = makeMasks(dataset, usedFiles, baseMask = mask, nstdevs = nstdevs)
 
-badFramesLog = f'{dest}/badFrames.txt'
-if os.path.isfile(badFramesLog):
-    os.remove(badFramesLog)
+    subdir = f'xye_{nstdevs}stdevs/'
 
-files = glob('*.cbf')
 
-doMonitor = True
+    if not os.path.exists(f'{dest}/average/xye/'):
+        os.makedirs(f'{dest}/average/xye/')
 
-#monitorfile = glob('*.dat')[0]
-#monitor = np.loadtxt(monitorfile,usecols = 2, skiprows = 1)
-
-scale = 10**9
-dataset, usedFiles = makeDataSet(files,badFramesLog,scale,doMonitor)
-
+    print('\nmaking and integrating average images\n')
+    integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct)
+    print('\nintegrating individual images\n')
+    integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray)
     
-average = np.average(dataset,axis=2)
-median = np.median(dataset,axis=2)
-stdev = np.std(dataset,axis = 2)
-print('\ncreating masks\n')
-nstdevs = 3
-maskdct = makeMasks(dataset, usedFiles, baseMask = mask, nstdevs = nstdevs)
-
-subdir = f'xye_{nstdevs}stdevs/'
-
-
-if not os.path.exists(f'{dest}/average/xye/'):
-    os.makedirs(f'{dest}/average/xye/')
-
-print('\nmaking and integrating average images\n')
-integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct)
-print('\nintegrating individual images\n')
-integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray)
-
+if __name__ == '__main__':
+    run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile)
