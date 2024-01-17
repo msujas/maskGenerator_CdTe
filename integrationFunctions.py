@@ -111,7 +111,7 @@ def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th
     im.array = avim
     im.save(f'{dest}/average/{shortbasename}_average.cbf')
 
-    im.array = gainCorrection(avim,gainArray)
+    avimGain = im.array = gainCorrection(avim,gainArray)
     im.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
 
 
