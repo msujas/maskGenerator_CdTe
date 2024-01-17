@@ -107,12 +107,12 @@ def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th
         dataset2[:,:,n] = np.where(maskdct[n] == 0, dataset[:,:,n], np.nan)
     avim = np.nanmean(dataset2, axis = 2)
     avim = np.where(np.isnan(avim), -2, avim)
-    im = fabio.cbfimage.CbfImage(avim)
+    im = CbfImage()
+    im.array = avim
     im.save(f'{dest}/average/{shortbasename}_average.cbf')
 
-    avimGain = gainCorrection(avim,gainArray)
-    imGain = fabio.cbfimage.CbfImage(avimGain)
-    imGain.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
+    im.array = gainCorrection(avim,gainArray)
+    im.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
 
 
 

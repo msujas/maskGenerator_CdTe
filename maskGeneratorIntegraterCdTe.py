@@ -25,7 +25,7 @@ def run(direc,dest,poni,mask,gainFile):
         os.remove(badFramesLog)
 
     files = glob('*.cbf')
-
+    files.sort()
     doMonitor = True
     scale = 10**9
     dataset, usedFiles = makeDataSet(files,badFramesLog,scale,doMonitor)
