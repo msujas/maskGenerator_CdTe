@@ -1,1 +1,1 @@
-from integrationFunctions import *
+from .integrationFunctions import *
