@@ -19,7 +19,6 @@ def run(direc,dest,poni,mask,gainFile):
 
     mask = fabio.open(mask).data
     poni = pyFAI.load(poni)
-    gainArray = fabio.open(gainFile).data
     badFramesLog = f'{dest}/badFrames.txt'
     if os.path.isfile(badFramesLog):
         os.remove(badFramesLog)
@@ -40,9 +39,9 @@ def run(direc,dest,poni,mask,gainFile):
         os.makedirs(f'{dest}/average/xye/')
 
     print('\nmaking and integrating average images\n')
-    integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct)
+    integrateAverage(dataset, usedFiles, dest, poni, gainFile, maskdct)
     print('\nintegrating individual images\n')
-    integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray)
+    integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainFile)
     
 if __name__ == '__main__':
     run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile)

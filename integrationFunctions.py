@@ -78,14 +78,14 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
-def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
+def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
     '''
-    arguments: dataset, files, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
+    arguments: dataset, files, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
     files - files used to make dataset
     dest - destination directory
     poni - pyfai azimuthal integrator object
-    gainArray - array containing gain values for images
+    gainFile - file where gain array is stored
     maskdct - dictionary of masks, same length as dataset
     unit - integration unit ('2th_deg', 'q_A', 'q_nm')
     npt - number of radial points
@@ -110,34 +110,40 @@ def integrateAverage(dataset, files, dest, poni, gainArray, maskdct, unit = '2th
     im = CbfImage()
     im.array = avim
     im.save(f'{dest}/average/{shortbasename}_average.cbf')
-
-    avimGain = im.array = gainCorrection(avim,gainArray)
-    im.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
-
+    
+    if gainFile != None:
+        gainArray = fabio.open(gainFile).data
+        avimGain = im.array = gainCorrection(avim,gainArray)
+        im.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
+        mask_avGain = np.where(avimGain < 0, 1, 0)
 
 
     outfile = f'{dest}/average/xye/{shortbasename}_average.xye'
     outfile_2d = outfile.replace('.xye','_pyfai.edf')
     mask_av = np.where(avim < 0, 1, 0)
-    mask_avGain = np.where(avimGain < 0, 1, 0)
+    
     poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = polF,unit = unit,
                     correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
     result = poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = polF,unit = unit,
                     correctSolidAngle = True, method = 'bbox',npt_rad = npt, npt_azim = nptA, error_model = 'poisson', safe = False)
+    clearPyFAI_header(outfile)
     bubbleHeader(outfile_2d,*result[:3])
 
-    outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
-    poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
-                    correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
-    outfileGC_2d = outfileGC.replace('.xye','_pyfai.edf')
-    result = poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = polF,unit = unit,
-                    correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
-    clearPyFAI_header(outfile)
-    clearPyFAI_header(outfileGC)
-    bubbleHeader(outfileGC_2d,*result[:3])
+    if gainFile != None:
+        outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
+        poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
+                        correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
+        outfileGC_2d = outfileGC.replace('.xye','_pyfai.edf')
+        result = poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = polF,unit = unit,
+                        correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
+        clearPyFAI_header(outfileGC)
+        bubbleHeader(outfileGC_2d,*result[:3])
+    
+    
+    
 
 
-def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainArray, avdir = 'average', unit = '2th_deg', npt = 5000, polF = 0.99):
+def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, avdir = 'average', unit = '2th_deg', npt = 5000, polF = 0.99):
     '''
     argumenets: dataset,files, dest, subdir, poni, maskdct, gainArray, avdir = 'average', unit = '2th_deg', npt = 5000, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
@@ -161,7 +167,7 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainArray, a
     wavelength = poni.wavelength*10**10
     if not os.path.exists(f'{dest}/{subdir}/{avdir}/'):
         os.makedirs(f'{dest}/{subdir}/{avdir}/')
-    if not os.path.exists(f'{dest}/{subdirGain}/{avdir}/'):
+    if not os.path.exists(f'{dest}/{subdirGain}/{avdir}/') and gainFile != None:
         os.makedirs(f'{dest}/{subdirGain}/{avdir}/')  
     for c,file in enumerate(files):
         print(file)
@@ -169,34 +175,44 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainArray, a
         outputfile = f'{dest}/{subdir}/{xyefile}'
         x,y,e = poni.integrate1d(data = dataset[:,:,c], filename = outputfile,mask = maskdct[c],polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
-
-        outputfileGC = f'{dest}/{subdirGain}/{xyefile}'
-        arrayGC = dataset[:,:,c]/gainArray
-        arrayGC = np.where(gainArray < 0, -1, arrayGC)
-        xg,yg,eg = poni.integrate1d(data = arrayGC, filename = outputfileGC,mask = maskdct[c],polarization_factor = polF,unit = unit,
-                        correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
-        
-
         clearPyFAI_header(outputfile)
-        clearPyFAI_header(outputfileGC)
+        if gainFile != None:
+            gainArray = fabio.open(gainFile).data
+            outputfileGC = f'{dest}/{subdirGain}/{xyefile}'
+            arrayGC = dataset[:,:,c]/gainArray
+            arrayGC = np.where(gainArray < 0, -1, arrayGC)
+            xg,yg,eg = poni.integrate1d(data = arrayGC, filename = outputfileGC,mask = maskdct[c],polarization_factor = polF,unit = unit,
+                            correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
+            clearPyFAI_header(outputfileGC)
+
+        
+        
 
 
         if c == 0:
             av1d = np.empty(shape = (len(y),len(files)))
-            av1dg = np.empty(shape = (len(yg),len(files)))
             eav = np.empty(shape = (len(y),len(files)))
-            eavg = np.empty(shape = (len(yg),len(files)))
+            if gainFile != None:
+                av1dg = np.empty(shape = (len(yg),len(files)))
+                eavg = np.empty(shape = (len(yg),len(files)))
         av1d[:,c] = y
-        av1dg[:,c] = yg
         eav[:,c] = e
-        eavg[:,c] = eg
+        if gainFile != None:
+            av1dg[:,c] = yg
+            eavg[:,c] = eg
     av1d = np.average(av1d,axis=1)
-    av1dg = np.average(av1dg,axis=1)
     eav = np.average(eav,axis = 1)
-    eavg = np.average(eavg,axis = 1)
+    if gainFile != None:
+        av1dg = np.average(av1dg,axis=1)
+        eavg = np.average(eavg,axis = 1)
     np.savetxt(f'{dest}/{subdir}/average/{xyefile}',np.array([x,av1d,eav]).transpose())
-    np.savetxt(f'{dest}/{subdirGain}/average/{xyefile}',np.array([xg,av1dg,eavg]).transpose())
+
     qav = av1d*4*np.pi*np.sin(x*np.pi/(180*2))/wavelength
-    qavg = av1dg*4*np.pi*np.sin(xg*np.pi/(180*2))/wavelength
     np.savetxt(f'{dest}/{subdir}/average/qav.xy',np.array([x,qav]).transpose())
-    np.savetxt(f'{dest}/{subdirGain}/average/qav.xy',np.array([xg,qavg]).transpose())
+    
+    if gainFile != None:
+        qavg = av1dg*4*np.pi*np.sin(xg*np.pi/(180*2))/wavelength
+        np.savetxt(f'{dest}/{subdirGain}/average/{xyefile}',np.array([xg,av1dg,eavg]).transpose())
+        np.savetxt(f'{dest}/{subdirGain}/average/qav.xy',np.array([xg,qavg]).transpose())
+    
+    
