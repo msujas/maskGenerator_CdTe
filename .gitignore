@@ -1,8 +1,8 @@
 __pycache__
 pixelPoissonness.edf
-*gain*.py
 stdev_check.ipynb
 maskGeneratorIntegraterCdTe_gainMaps.ipynb
 Save maps pyfai.ipynb
 .ipynb_checkpoints
 *.edf
+maskGenerator_splitting_loop.py
