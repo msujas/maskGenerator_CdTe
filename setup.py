@@ -32,8 +32,8 @@ setup(
 
     # When your source code is in a subdirectory under the project root, e.g.
     # `src/`, it is necessary to specify the `package_dir` argument.
-
-    packages=find_packages(),  # Required
-
-    python_requires=">=3.7, <4",
+    package_dir={'maskGenerator':'.'},
+    packages=['maskGenerator'],  # Required
+    install_requires=['fabio','pyfai', 'cryio','matplotlib'],
+    python_requires=">=3.7",
 )
