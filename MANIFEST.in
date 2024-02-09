@@ -1,5 +1,4 @@
 exclude polynomial*
-exclude setup.py
 exclude *.ipynb
 exclude *.edf
 exclude maskGenerator_splitting_loop.py
