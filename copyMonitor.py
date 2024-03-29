@@ -15,10 +15,9 @@ def run(sourcedir,destdir):
         destfiles = [file.replace(sourcedir,destdir) for file in cbffiles]
         for file,destfile in zip(cbffiles,destfiles):
             header = CbfHeader(file)
-            try:
-                flux = int(header['Flux'])
-            except:
+            if not 'Flux' in header:
                 continue
+            flux = int(header['Flux'])
             print(file)
             print(destfile)
             if not os.path.exists(destfile):
@@ -27,7 +26,7 @@ def run(sourcedir,destdir):
             destheader = CbfHeader(destfile)
             destheader.header['Flux'] = flux
             destheader.save_cbf(destfile)
-               
+            
 if __name__ == '__main__':
     run(sourcedir,destdir) 
     
