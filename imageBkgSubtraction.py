@@ -3,7 +3,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import pyFAI
 import os
-import integrationFunctions as ifuns
+import maskGeneratorBM31 as ifuns
 
 file = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\measurements\Si\xrd\average/average_gainCorrected.cbf'
 bkgfile = r'C:\Users\kenneth1a\Documents\beamlineData\May2023\measurements\blankCapillary\0p3mm\xrd\average/average_gainCorrected.cbf'

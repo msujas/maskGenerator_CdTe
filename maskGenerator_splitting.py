@@ -8,7 +8,7 @@ import numpy as np
 from glob import glob
 import os
 from cryio.cbfimage import CbfHeader
-from integrationFunctions import makeDataSet, makeMasks, integrateAverage, integrateIndividual, appendBadFrames
+from maskGeneratorBM31 import makeDataSet, makeMasks, integrateAverage, integrateIndividual, appendBadFrames
 
 
 #direc = os.getcwd() # Current Directory

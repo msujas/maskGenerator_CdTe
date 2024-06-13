@@ -5,7 +5,7 @@ import numpy as np
 from glob import glob
 import os
 from pathlib import Path
-from integrationFunctions import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
+from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
 
 direc = r'X:\users\a311207\20231204\capillaries'
 homedir = str(Path.home())

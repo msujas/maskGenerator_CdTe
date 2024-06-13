@@ -106,7 +106,6 @@ class Ui_MainWindow(object):
         self.runButton.clicked.connect(self.run)
 
     def retranslateUi(self, MainWindow):
-
         _translate = QtCore.QCoreApplication.translate
 
     def selectFolder(self):
@@ -180,6 +179,7 @@ class Ui_MainWindow(object):
         self.updateConfig()
     
     def run(self):
+        print('running')
         direc = self.directoryBox.text()
         dest = direc
         poni = self.poniBox.text()

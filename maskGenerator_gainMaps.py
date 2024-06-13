@@ -3,7 +3,7 @@ import fabio
 import numpy as np
 from glob import glob
 import os, re
-import integrationFunctions as ifuns
+import maskGeneratorBM31 as ifuns
 
 
 direc =  r'C:\Users\kenneth1a\Documents\beamlineData\March2023_gainMap\GainMeasure\pos7/xrd/' # Directory of xrd files
