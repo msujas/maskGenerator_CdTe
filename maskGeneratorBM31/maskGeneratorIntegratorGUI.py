@@ -65,12 +65,12 @@ class Ui_MainWindow(object):
         self.gainMapButton.setText("...")
 
         self.dirLabel = QtWidgets.QLabel(self.centralwidget)
-        self.dirLabel.setGeometry(QtCore.QRect(480, 20, 47, 13))
+        self.dirLabel.setGeometry(QtCore.QRect(480, 20, 47, 16))
         self.dirLabel.setObjectName("dirLabel")
         self.dirLabel.setText( "directory")
 
         self.poniLabel = QtWidgets.QLabel(self.centralwidget)
-        self.poniLabel.setGeometry(QtCore.QRect(480, 60, 47, 13))
+        self.poniLabel.setGeometry(QtCore.QRect(480, 60, 47, 16))
         self.poniLabel.setObjectName("poniLabel")
         self.poniLabel.setText( "poni file")
 

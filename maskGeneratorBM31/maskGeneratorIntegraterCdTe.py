@@ -3,11 +3,11 @@ import fabio
 import numpy as np
 from glob import glob
 import os, re
-if __name__ == '__main__':
-    from integrationFunctions import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
-else:
-    from . import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
 
+try:
+    from . import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
+except ImportError:
+    from integrationFunctions import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
 
 direc = r'Z:\visitor\a311217\bm31\20240129\pylatus\capillaries\LaB6_0-5_0-01\xrd/' # Directory of xrd files
 dest = direc.replace(r'X:\users\a311207\20231204',r'Z:\visitor\a311207\bm31\20231204\pylatus')
