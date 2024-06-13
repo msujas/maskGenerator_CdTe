@@ -1,4 +1,4 @@
-Run 'pip install -e .' in the folder to install. This creates a GUI program called 'imagin' (Image MAsk Generator INtegrator). Run from the command prompt - choose directory, poni  file, mask file and gain map file, then run.
+Run 'pip install -e .' (-e for editable, dropping will put files in site-packages, rather than reading directly) in the folder to install. This creates a GUI program called 'imagin' (Image MAsk Generator INtegrator). Run from the command prompt - choose directory, poni  file, mask file and gain map file, then run.
 
 A Jupyter Notebook for automatically generating masks for cosmic radation on the Pilatus 2M CdTe detector on BM31, SNBL, ESRF. Requires a series of images (~20) and filters by the standard deviation on each pixel. The main script is maskGeneratorIntegraterCdTe.ipynb. maskGeneratorCdTe_recursive.py is similar and will run through all folders from a specified directory.
 
