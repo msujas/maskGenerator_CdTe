@@ -6,3 +6,10 @@ Save maps pyfai.ipynb
 .ipynb_checkpoints
 *.edf
 maskGenerator_splitting_loop.py
+polynomialIntensityCorrection.py
+*.xye
+dist
+maskGenerator.egg-info
+bkgSubtraction2d.py
+dataCut.py
+maskGeneratorBM31/guiConfig.log

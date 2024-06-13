@@ -21,12 +21,16 @@ def run(sourcedir,destdir):
             print(file)
             print(destfile)
             if not os.path.exists(destfile):
-                #shutil.copy(file, destfile)
+                '''
+                if not os.path.exists(os.path.dirname(destfile)):
+                    os.makedirs(os.path.exists(os.path.dirname(destfile)))
+                shutil.copy(file, destfile)
+                '''
                 continue
             destheader = CbfHeader(destfile)
             destheader.header['Flux'] = flux
             destheader.save_cbf(destfile)
-            
+
 if __name__ == '__main__':
     run(sourcedir,destdir) 
     

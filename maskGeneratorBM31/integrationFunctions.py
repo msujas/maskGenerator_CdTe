@@ -19,7 +19,6 @@ def bubbleHeader(file2d,array2d, tth, eta):
     'Bubble_normalized': 1 
     }
     f = fabio.edfimage.EdfImage(data = array2d.transpose(), header = header)
-
     f.write(file2d)
 
 def appendBadFrames(badFramesLog,file):

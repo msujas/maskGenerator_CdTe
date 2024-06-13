@@ -3,14 +3,17 @@ import fabio
 import numpy as np
 from glob import glob
 import os, re
-from integrationFunctions import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
+if __name__ == '__main__':
+    from integrationFunctions import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
+else:
+    from . import  makeDataSet, makeMasks,  integrateAverage, integrateIndividual
 
 
-direc = r'X:\users\a311207\20231204\air2\xrd/' # Directory of xrd files
+direc = r'Z:\visitor\a311217\bm31\20240129\pylatus\capillaries\LaB6_0-5_0-01\xrd/' # Directory of xrd files
 dest = direc.replace(r'X:\users\a311207\20231204',r'Z:\visitor\a311207\bm31\20231204\pylatus')
-poni  = r'Z:\visitor\a311207\bm31\20231204\pylatus/Si000_15tilt.poni' # Poni file
-mask  = r'Z:\visitor\a311207\bm31\20231204\pylatus/pdf_baseMask_tilt.edf' # Mask file
-gainFile = r'Z:\visitor\a311207\bm31\20231204\pylatus\calculatedGainMap_48p6keV_filtered_kpm_2023-12-11.edf'
+poni  = r'Z:\visitor\a311217\bm31\20240129\pylatus/Si090_15tilt_MD.poni' # Poni file
+mask  = r'Z:\visitor\a311217\bm31\20240129\pylatus/pdfMask.edf' # Mask file
+gainFile = r'Z:\visitor\a311217\bm31\20240129\pylatus\gainmap\gainMap_thr30keV_filtered_kpm_2024-02-01.edf'
 
 def run(direc,dest,poni,mask,gainFile):
     os.chdir(direc)

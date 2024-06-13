@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 63.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maskGenerator"
+version = "1.0.0"
+requires-python = ">= 3.9"
+dependencies = ["numpy","matplotlib","pyFAI", "cryio", "PyQt6"]
+authors = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
+maintainers = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
+description = "scripts for integrating and removing cosmics from bm31 PDF data"
+readme = {file = "README.MD", content-type = "text/markdown"}
+keywords = ["PDF", "total scattering"]
+classifiers = [
+"Development Status :: 4 - Beta",
+"License :: OSI Approved :: MIT License",
+"Programming Language :: Python :: 3.12"]
+
+[project.scripts]
+imagin = "maskGeneratorBM31.maskGeneratorIntegratorGUI:main"
+
+[tool.setuptools]
+packages = ["maskGeneratorBM31"]
+
+[project.urls]
+repository = "https://github.com/msujas/maskGenerator_CdTe.git"

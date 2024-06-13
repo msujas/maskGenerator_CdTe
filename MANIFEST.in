@@ -1,4 +1,4 @@
 exclude polynomial*
-exclude *.ipynb
-exclude *.edf
 exclude maskGenerator_splitting_loop.py
+exclude bkgSubtraction2d.py
+exclude dataCut.py
