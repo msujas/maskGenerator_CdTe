@@ -185,10 +185,16 @@ class Ui_MainWindow(object):
         poni = self.poniBox.text()
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
+        stringDct = {poni:'poni file',mask:'mask file', gainFile: 'gain file', direc: 'directory'}
+        pars = [direc,poni,mask,gainFile]
+        for par in pars:
+            if not par:
+                print(f'input {stringDct[par]}')
+                return
+            elif not os.path.exists(par):
+                print(f'{stringDct[par]} not found')
+                return
 
-        if not direc or not poni or not mask or not gainFile:
-            print('input directory, poni, mask and/or gain file')
-            return
         try:
             maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile)
             print('finished')
