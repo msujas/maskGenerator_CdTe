@@ -13,12 +13,11 @@ else:
 from PyQt6 import QtCore, QtGui, QtWidgets
 import os
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(625, 331)
-        MainWindow.setWindowTitle("imagin")
+        MainWindow.setWindowTitle("imagin (Image MAsk Generator INtegrator)")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -144,6 +143,7 @@ class Ui_MainWindow(object):
             currentdir = os.path.dirname(self.gainMapBox.text())
         else:
             currentdir = '.'
+        print(currentdir)
         filter = "data file (*.edf)"
         dialog = QtWidgets.QFileDialog.getOpenFileName(caption = 'select gain map file',	filter = filter, directory=currentdir)
         if dialog[0]:
@@ -185,17 +185,9 @@ class Ui_MainWindow(object):
         poni = self.poniBox.text()
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
-        if not direc:
-            print('input directory')
-            return
-        if not poni:
-            print('input poni')
-            return
-        if not mask:
-            print('input mask')
-            return
-        if not gainFile:
-            print('input gain file')
+
+        if not direc or not poni or not mask or not gainFile:
+            print('input directory, poni, mask and/or gain file')
             return
         try:
             maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile)
@@ -203,6 +195,11 @@ class Ui_MainWindow(object):
         except IndexError:
             print('no valid files')
             return
+        except FileNotFoundError as e:
+            print(e)
+            return
+
+            
 
             
 def main():

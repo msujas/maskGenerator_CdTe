@@ -121,11 +121,11 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
     outfile_2d = outfile.replace('.xye','_pyfai.edf')
     mask_av = np.where(avim < 0, 1, 0)
     
-    poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = polF,unit = unit,
+    x,y,e = poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = polF,unit = unit,
                     correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
+    np.savetxt(outfile,np.array([x,y,e]).transpose(), fmt="%.6f")
     result = poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = polF,unit = unit,
                     correctSolidAngle = True, method = 'bbox',npt_rad = npt, npt_azim = nptA, error_model = 'poisson', safe = False)
-    clearPyFAI_header(outfile)
     bubbleHeader(outfile_2d,*result[:3])
 
     if gainFile != None:
@@ -174,7 +174,7 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, av
         outputfile = f'{dest}/{subdir}/{xyefile}'
         x,y,e = poni.integrate1d(data = dataset[:,:,c], filename = outputfile,mask = maskdct[c],polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
-        clearPyFAI_header(outputfile)
+        np.savetxt(outputfile, np.array([x,y,e]).transpose(),fmt = "%.6f")
         if gainFile != None:
             gainArray = fabio.open(gainFile).data
             outputfileGC = f'{dest}/{subdirGain}/{xyefile}'
