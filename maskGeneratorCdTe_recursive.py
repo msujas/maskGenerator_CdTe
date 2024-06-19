@@ -7,28 +7,30 @@ import os
 from pathlib import Path
 from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
 
-direc = r'X:\users\a311207\20231204\capillaries'
+direc = r'X:\users\a311207\20231204'
 homedir = str(Path.home())
 
 dest = direc.replace(r'X:\users\a311207\20231204',fr'Z:\visitor\a311207\bm31\20231204\pylatus')
-poni = r'Z:\visitor\a311207\bm31\20231204\pylatus/Si000_15tilt.poni'
-mask = r'Z:\visitor\a311207\bm31\20231204\pylatus\pdf_baseMask_tilt.edf'
-gainFile =  fr'Z:\visitor\a311207\bm31\20231204\pylatus/calculatedGainMap_48p6keV_filtered_kpm_2023-12-04.edf'
+poni = r'X:\users\a311207\20231204/Si_0_15tilt.poni'
+mask = r'X:\users\a311207\20231204\dtx0_dtr15_baseMask_lines.edf'
+gainFile =  r'X:\users\a311207\20231204/calculatedGainMap_48p6keV_kpm_filtered.edf'
 avdir = 'average'
 stdevs = 3
 scale = 1e9
 doMonitor = True
+folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
 
 
-def run(direc,dest,poni,mask,gainFile):
+
+def run(direc,dest,poni,mask,gainFile, folderPattern = ''):
     os.chdir(direc)
     mask = fabio.open(mask).data
     poni = pyFAI.load(poni)
 
 
     for root, dirs, files in os.walk(direc):
-        if avdir in root or 'badFrames' in root:
+        if avdir in root or 'badFrames' in root or folderPattern not in root:
             continue
         os.chdir(root)
         cbfs = glob('*.cbf')
@@ -60,5 +62,5 @@ def run(direc,dest,poni,mask,gainFile):
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
 if __name__ == '__main__':
-    run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile)    
+    run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile, folderPattern=folderPattern)    
      

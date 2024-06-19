@@ -13,3 +13,4 @@ maskGenerator.egg-info
 bkgSubtraction2d.py
 dataCut.py
 maskGeneratorBM31/guiConfig.log
+findMonitor.py
