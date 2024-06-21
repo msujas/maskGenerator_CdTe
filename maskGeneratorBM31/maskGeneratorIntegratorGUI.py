@@ -13,7 +13,27 @@ else:
     from . import maskGeneratorIntegraterCdTe
     from . import maskGeneratorCdTe_recursive
 from PyQt6 import QtCore, QtGui, QtWidgets
-import os
+import os,time 
+
+class Worker(QtCore.QThread):
+    def __init__(self,direc,poni, mask,gainFile,recursePattern):
+        super(Worker,self).__init__()
+        self.direc = direc
+        self.poni = poni
+        self.mask = mask
+        self.gainFile = gainFile
+        self.recursePattern = recursePattern
+    def run(self):
+        self.running = True
+        fileList = []
+        while self.running:
+            fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
+                                                                    self.recursePattern, fileList)
+            time.sleep(1)
+            if runningFull:
+                print('looking for new files')
+    def stop(self):
+        self.running = False
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -47,9 +67,15 @@ class Ui_MainWindow(object):
         self.gainMapBox.setObjectName("gainMapBox")
 
         self.runButton = QtWidgets.QPushButton(self.centralwidget)
-        self.runButton.setGeometry(QtCore.QRect(420, 230, 75, 23))
+        self.runButton.setGeometry(QtCore.QRect(340, 230, 75, 23))
         self.runButton.setObjectName("runButton")
         self.runButton.setText("Run")
+
+        self.stopButton = QtWidgets.QPushButton(self.centralwidget)
+        self.stopButton.setGeometry(QtCore.QRect(420, 230, 75, 23))
+        self.stopButton.setObjectName("stopButton")
+        self.stopButton.setText("Stop")
+        self.stopButton.setEnabled(False)
 
         self.maskButton = QtWidgets.QPushButton(self.centralwidget)
         self.maskButton.setGeometry(QtCore.QRect(450, 100, 21, 21))
@@ -89,7 +115,7 @@ class Ui_MainWindow(object):
         self.recurseBox = QtWidgets.QCheckBox(self.centralwidget)
         self.recurseBox.setGeometry(QtCore.QRect(20, 180, 20, 20))
         self.recurseBox.setObjectName("recurseBox")
-        self.recurseBox.setText("run recursively")
+        self.recurseBox.setText("run recursively\nin loop")
         self.recurseBox.adjustSize()
 
         self.recursePatternBox = QtWidgets.QLineEdit(self.centralwidget)
@@ -122,6 +148,7 @@ class Ui_MainWindow(object):
         self.maskButton.clicked.connect(self.selectMask)
         self.gainMapButton.clicked.connect(self.selectGainFile)
         self.runButton.clicked.connect(self.run)
+        self.stopButton.clicked.connect(self.stopWorker)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -219,7 +246,8 @@ class Ui_MainWindow(object):
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
-                maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
+                self.startWorker(direc,poni,mask,gainFile,dirpattern)
+                #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
                 maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile)
             print('finished')
@@ -229,8 +257,20 @@ class Ui_MainWindow(object):
         except FileNotFoundError as e:
             print(e)
             return
+        
+    def startWorker(self, direc, poni,mask,gainFile,recursePattern):
+        self.runButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
+        self.thread = Worker(direc, poni,mask,gainFile,recursePattern)
+        self.thread.start()
 
-            
+    def stopWorker(self):
+        self.thread.stop()
+        self.thread.quit()
+        self.thread.wait()
+        self.runButton.setEnabled(True)
+        self.stopButton.setEnabled(False)
+        print('stopping')
 
             
 def main():

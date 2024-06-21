@@ -5,7 +5,9 @@ import numpy as np
 from glob import glob
 import os
 from pathlib import Path
+import time
 from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
+
 
 direc = r'X:\users\a311207\20231204'
 homedir = str(Path.home())
@@ -23,12 +25,13 @@ folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
 
 
-def run(direc,dest,poni,mask,gainFile, folderPattern = ''):
+def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
+    if fileList == None:
+        fileList = []
     os.chdir(direc)
     mask = fabio.open(mask).data
     poni = pyFAI.load(poni)
-
-
+    runningFull = False
     for root, dirs, files in os.walk(direc):
         if avdir in root or 'badFrames' in root or folderPattern not in root:
             continue
@@ -36,6 +39,16 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = ''):
         cbfs = glob('*.cbf')
         cbfs.sort()
         if len(cbfs) == 0:
+            continue
+        
+        runDirec = False
+        for cbf in cbfs:
+            fullcbf = f'{root}/{cbf}'
+            if not fullcbf in fileList:
+                fileList.append(fullcbf)
+                runDirec = True
+                runningFull = True
+        if not runDirec:
             continue
         print(root)
         #if doMonitor: #for using monitor log files instead of file header
@@ -61,6 +74,17 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = ''):
         print('\nintegrating individual images')
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
+    return fileList, runningFull
+        
+def runLoop(direc,dest,poni,mask,gainFile,folderPattern):
+    fileList = []
+    while True:
+        fileList, runningFull = run(direc,dest,poni,mask, gainFile, folderPattern, fileList)
+        time.sleep(1)
+        if runningFull:
+            print('looking for new files')
+
+
 if __name__ == '__main__':
     run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile, folderPattern=folderPattern)    
      
