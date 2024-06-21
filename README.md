@@ -8,6 +8,7 @@ The azimuthalMaskGenerator.py script can be used to remove cosmics from a single
 
 Other scrips: maskGenerator_splitting.py - for very large datasets (e.g. in situ), splitting up the mask generation into smaller subsets of images so very large arrays don't have to be stored.
 
-![image](https://github.com/msujas/maskGenerator_CdTe/assets/79653376/711fa554-6a3c-439a-adc3-36cd8208ba26)
+![image](https://github.com/msujas/maskGenerator_CdTe/assets/79653376/31e7f3b1-2edd-4f27-bf2e-dca32686ac3c)
+
 
 
