@@ -22,9 +22,6 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-
-
-
 def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
     if fileList == None:
         fileList = []
@@ -70,8 +67,14 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
         print('\nmaking masks')
         masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
         print('\nmaking and integrating average image')
-        integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
-        print('\nintegrating individual images')
+        for n in range(5):
+            try:
+                integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
+                print('\nintegrating individual images')
+            except OSError as e:
+                if n == 4:
+                    raise OSError(e)
+                time.sleep(1)
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
     return fileList, runningFull

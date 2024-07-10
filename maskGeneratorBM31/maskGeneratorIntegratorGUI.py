@@ -27,8 +27,14 @@ class Worker(QtCore.QThread):
         self.running = True
         fileList = []
         while self.running:
-            fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
+            try:
+                fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
                                                                     self.recursePattern, fileList)
+            except OSError as e:
+                print(e)
+                print('stopping')
+                self.stop()
+                return
             time.sleep(1)
             if runningFull:
                 print('looking for new files')
