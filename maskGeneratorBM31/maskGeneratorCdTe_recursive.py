@@ -71,6 +71,7 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
             try:
                 integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
                 print('\nintegrating individual images')
+                break
             except OSError as e:
                 if n == 4:
                     raise OSError(e)
