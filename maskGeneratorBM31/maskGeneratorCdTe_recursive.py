@@ -66,16 +66,17 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
             continue
         print('\nmaking masks')
         masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
-        print('\nmaking and integrating average image')
+        
         for n in range(5):
             try:
+                print('\nmaking and integrating average image')
                 integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
-                print('\nintegrating individual images')
                 break
             except OSError as e:
                 if n == 4:
                     raise OSError(e)
                 time.sleep(1)
+        print('\nintegrating individual images')
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
     return fileList, runningFull
