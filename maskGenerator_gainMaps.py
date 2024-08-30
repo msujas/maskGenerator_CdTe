@@ -11,9 +11,9 @@ mask  = fr'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap\minMask.edf
 gainFile = r'C:\Users\kenneth1a\Documents\beamlineData\Feb2023_gainMap\glass2\minMask/calculatedGainMap_48p6keV.edf'
 ponidir = r'C:\Users\kenneth1a\Documents\beamlineData\March2023_gainMap/'
 ponis = glob(f'{ponidir}/*.poni')
-
-pos = [x for x in re.split('/|\\\\',direc) if 'pos' in x][0]
-poni = [poni for poni in ponis if pos in poni][0]
+#poni = ponis[0]
+#pos = [x for x in re.split('/|\\\\',direc) if 'pos' in x][0]
+#poni = [poni for poni in ponis if pos in poni][0]
 def run(direc,mask,gainFile,poni,avdir = 'average', dest = None,doMonitor = True):
     '''
     direc - directory containing cbf files

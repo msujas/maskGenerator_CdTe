@@ -9,6 +9,14 @@ def gainCorrection(avim,gainArray):
     avimGain = np.where(gainArray <0, -1, avimGain)
     return avimGain
 
+def gainCorrectionFiles(cbfFile, gainFile):
+    array = CbfImage(cbfFile).array
+    gainArray = fabio.open(gainFile).data
+    newarray = gainCorrection(array,gainArray)
+    im = CbfImage()
+    im.array = newarray
+    im.save(cbfFile.replace('.cbf','_GC.cbf'))
+
 def clearPyFAI_header(file):
     x,y,e = np.loadtxt(file,unpack = True, comments = '#')
     np.savetxt(file,np.array([x,y,e]).transpose(), '%.6f')

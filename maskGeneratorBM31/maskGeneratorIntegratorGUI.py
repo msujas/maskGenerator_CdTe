@@ -29,7 +29,7 @@ class Worker(QtCore.QThread):
         while self.running:
             try:
                 fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
-                                                                    self.recursePattern, fileList)
+                                                                        self.recursePattern, fileList)
             except OSError as e:
                 print(e)
                 print('stopping')
