@@ -63,7 +63,6 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
         filesplit[n].append(f)
         count += 1
             
-    gainArray = fabio.open(gainFile).data
     mask = fabio.open(mask).data
     subdir = f'xye_{nstdevs}stdevs_{averaging}/'
 
@@ -74,10 +73,10 @@ def run(direc, dest,poni,mask,gainFile,averaging = 20,doMonitor = True):
         print('making masks')
         maskdct = makeMasks(dataset, usedFiles, mask, nstdevs = 3, plot = False)
         print('integrating average image')
-        integrateAverage(dataset, usedFiles, dest, poni, gainArray, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, 
+        integrateAverage(dataset, usedFiles, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, 
                          shortbasename=files[-1].replace('.cbf',''))
         print('integrating individual images')
-        integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainArray, avdir = 'average', unit = '2th_deg', 
+        integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainFile, avdir = 'average', unit = '2th_deg', 
                             npt = 5000, polF = 0.99)
         
 if __name__ == '__main__':
