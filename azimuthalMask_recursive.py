@@ -7,8 +7,9 @@ gainfile = None
 polarisation = 0.99
 scale = 10**5
 stdevs = 3
-nbins = 800
+threshold = 100
+nbins = 1500
 ext = 'cbf'
 outdir = 'xye'
 
-runRecursive(direc, ponifile, maskfile, polarisation, gainfile, stdevs,scale, nbins, ext, outdir)
+runRecursive(direc, ponifile, maskfile, polarisation, gainfile, stdevs,scale, threshold, nbins, ext, outdir)

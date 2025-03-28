@@ -12,26 +12,30 @@ if __name__ == '__main__':
 else:
     from . import clearPyFAI_header, gainCorrection
 
-poni = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/LaB6_700.poni'
-polarisation = 0.99
-stdevs = 3
-datadir = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/xrd/'
-maskfile = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/mask700.edf'
-scale = 10**5
-gainFile = None#r'W:\simonWintersteller/gainMap_filtered_kpm_2025-02-05.edf'
-saveMasks = False
-save2d = False
 
-def generateMask(dataarray, binarray,nbins, stdevs, basemask):
+datadir = r''
+poni = r''
+maskfile = r''
+polarisation = 0.99
+stdevs = 4
+threshold = 100 #counts above 1 stdev to mask
+scale = 10**5
+gainFile = None #r'C:\Users\kenneth1a\Documents\beamlineData\gainMaps/gainMap_filtered_kpm_2025-02-05.edf'
+saveMasks = True
+save2d = True
+nbins = 800
+
+def generateMask(dataarray, binarray,nbins, stdevs, basemask, threshold = 100):
+    dataarray2 = np.where(dataarray < 0, np.nan, dataarray)
     array = np.empty(shape = dataarray.shape)
     newmask = basemask.copy()
     for n in range(nbins):
         wherebin = np.where(binarray == n)
-        array =  dataarray[wherebin]
+        array =  dataarray2[wherebin]
         maskBin = basemask[wherebin]
         stdev = np.nanstd(array)
         median = np.nanmedian(array)
-        maskBin = np.where(array > median + stdevs*stdev, 1, maskBin)
+        maskBin = np.where((array > median + stdevs*stdev) | (array > median + stdev + threshold) , 1, maskBin)
         y = np.where(binarray==n)[0]
         x = np.where(binarray==n)[1]
         newmask[[y],[x]] = maskBin
@@ -75,8 +79,8 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
     poni.integrate1d(dataarray, mask = mask, filename=outfile, polarization_factor=0.99, unit = '2th_deg', correctSolidAngle=True,
                      method = 'bbox', npt = 5000, error_model='poisson', safe = False)
 
-def run(datadir, ponifile,  stdevs, maskfile, scale, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',outdir = 'xye', save2d = False,
-         saveMasks = False):
+def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',
+        outdir = 'xye', save2d = False, saveMasks = False):
     os.chdir(datadir)
     if not os.path.exists(f'{datadir}/{outdir}/'):
         os.makedirs(f'{datadir}/{outdir}/')
@@ -97,7 +101,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, polarisation = 0.99, gainFi
         outfile = f'{outdir}/{xyefile}'
         header = CbfHeader(file)
         monitorCounts = header['Flux']
-        mask = generateMask(dataarray,binarray,nbins, stdevs, basemask)
+        mask = generateMask(dataarray,binarray,nbins, stdevs, basemask, threshold)
         if saveMasks:
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
@@ -112,12 +116,13 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, polarisation = 0.99, gainFi
                         correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
             bubbleHeader(outfile_2d,*result[:3])
             
-def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, nbins= 800, ext = 'cbf', outdir = 'xye'):
+def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
+                 ext = 'cbf', outdir = 'xye'):
     for root, dirs, files in os.walk(direc):
         cbfs = glob(f'{root}/*.{ext}')
         if not cbfs:
             continue
-        run(root,ponifile, stdevs, maskfile, scale, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
+        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
 
 if __name__ == '__main__':
-    run(datadir, poni,  stdevs, maskfile, scale, polarisation,gainFile, save2d=save2d, saveMasks=saveMasks)
+    run(datadir, poni,  stdevs, maskfile, scale, threshold, polarisation,gainFile, save2d=save2d, saveMasks=saveMasks, nbins=nbins)
