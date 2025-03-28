@@ -8,18 +8,19 @@ import pyFAI.geometry
 import os
 from glob import glob
 if __name__ == '__main__':
-   from integrationFunctions import clearPyFAI_header, gainCorrection 
+   from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 else:
     from . import clearPyFAI_header, gainCorrection
 
-poni = r'W:\simonWintersteller/Si_00_0tilt.poni'
+poni = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/LaB6_700.poni'
 polarisation = 0.99
-stdevs = 4
-datadir = r'W:\simonWintersteller\pdf_0_0tilt_33thresh/'
-maskfile = r'W:\simonWintersteller/mask_0_00tilt2024_4rows.edf'
-scale = 10**9
-gainFile = r'W:\simonWintersteller/gainMap_filtered_kpm_2025-02-05.edf'
-
+stdevs = 3
+datadir = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/xrd/'
+maskfile = r'C:\Users\kenneth1a\Documents\beamlineData\ch7459/mask700.edf'
+scale = 10**5
+gainFile = None#r'W:\simonWintersteller/gainMap_filtered_kpm_2025-02-05.edf'
+saveMasks = False
+save2d = False
 
 def generateMask(dataarray, binarray,nbins, stdevs, basemask):
     array = np.empty(shape = dataarray.shape)
@@ -74,17 +75,20 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
     poni.integrate1d(dataarray, mask = mask, filename=outfile, polarization_factor=0.99, unit = '2th_deg', correctSolidAngle=True,
                      method = 'bbox', npt = 5000, error_model='poisson', safe = False)
 
-def run(datadir, ponifile, polarisation, stdevs, maskfile, scale, gainFile = None, nbins = 800,outdir = 'xye'):
+def run(datadir, ponifile,  stdevs, maskfile, scale, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',outdir = 'xye', save2d = False,
+         saveMasks = False):
     os.chdir(datadir)
     if not os.path.exists(f'{datadir}/{outdir}/'):
         os.makedirs(f'{datadir}/{outdir}/')
     basemask = fabio.open(maskfile).data
-    cbfs = glob(f'*.cbf')
+    cbfs = glob(f'*.{ext}')
     array2th, polarray, saArray, binarray = generateDetArrays(cbfs[0],ponifile,nbins)
     poni = pyFAI.load(ponifile)
     maskdir = f'{datadir}/masks{stdevs}/'
     if gainFile != None:
         gainMap = fabio.open(gainFile).data
+    else:
+        gainMap=None
     os.makedirs(maskdir,exist_ok=True)
     for file in cbfs:
         print(file)
@@ -94,13 +98,26 @@ def run(datadir, ponifile, polarisation, stdevs, maskfile, scale, gainFile = Non
         header = CbfHeader(file)
         monitorCounts = header['Flux']
         mask = generateMask(dataarray,binarray,nbins, stdevs, basemask)
-        maskim = fabio.edfimage.EdfImage(mask)
-        maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
+        if saveMasks:
+            maskim = fabio.edfimage.EdfImage(mask)
+            maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
         normArray = (dataarray/monitorCounts) * scale
         poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = polarisation,
                         unit = '2th_deg', correctSolidAngle = True, method = 'bbox', npt = 5000, 
                         error_model = 'poisson', safe = False)
         clearPyFAI_header(outfile)
+        if save2d:
+            outfile_2d = outfile.replace('.xye','.edf')
+            result = poni.integrate2d(data = normArray, filename = outfile_2d,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
+                        correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
+            bubbleHeader(outfile_2d,*result[:3])
+            
+def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, nbins= 800, ext = 'cbf', outdir = 'xye'):
+    for root, dirs, files in os.walk(direc):
+        cbfs = glob(f'*.{ext}')
+        if not cbfs:
+            continue
+        run(root,ponifile, stdevs, maskfile, scale, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
 
 if __name__ == '__main__':
-    run(datadir, poni, polarisation, stdevs, maskfile, scale,gainFile)
+    run(datadir, poni,  stdevs, maskfile, scale, polarisation,gainFile, save2d=save2d, saveMasks=saveMasks)
