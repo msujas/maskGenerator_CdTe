@@ -114,7 +114,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, polarisation = 0.99, gainFi
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, nbins= 800, ext = 'cbf', outdir = 'xye'):
     for root, dirs, files in os.walk(direc):
-        cbfs = glob(f'*.{ext}')
+        cbfs = glob(f'{root}/*.{ext}')
         if not cbfs:
             continue
         run(root,ponifile, stdevs, maskfile, scale, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
