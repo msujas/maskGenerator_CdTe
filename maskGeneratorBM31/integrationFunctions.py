@@ -126,7 +126,7 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
 
 
     outfile = f'{dest}/average/xye/{shortbasename}_average.xye'
-    outfile_2d = outfile.replace('.xye','_pyfai.edf')
+    outfile_2d = outfile.replace('.xye','.edf')
     mask_av = np.where(avim < 0, 1, 0)
     
     x,y,e = poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = polF,unit = unit,
@@ -140,7 +140,7 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
         outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
         poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
-        outfileGC_2d = outfileGC.replace('.xye','_pyfai.edf')
+        outfileGC_2d = outfileGC.replace('.xye','.edf')
         result = poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
         clearPyFAI_header(outfileGC)
