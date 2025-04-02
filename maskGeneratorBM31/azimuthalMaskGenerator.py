@@ -10,7 +10,7 @@ from glob import glob
 if __name__ == '__main__':
    from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 else:
-    from . import clearPyFAI_header, gainCorrection
+    from . import clearPyFAI_header, gainCorrection, bubbleHeader
 
 
 datadir = r''
@@ -25,7 +25,7 @@ saveMasks = True
 save2d = True
 nbins = 800
 
-def generateMask(dataarray, binarray,nbins, stdevs, basemask, threshold = 100):
+def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
     dataarray2 = np.where(dataarray < 0, np.nan, dataarray)
     array = np.empty(shape = dataarray.shape)
     newmask = basemask.copy()
@@ -62,22 +62,32 @@ def generateDetArrays(cbffile, ponifile, nbins):
     binarray = np.where(dataarray < 0, -1, binarray)
     return array2th, polarray, saArray, binarray
 
-def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 3, nbins = 800, outdir = 'xye'):
+def int2d(outfile1d, normArray, poni, mask):
+    outfile_2d = outfile1d.replace('.xye','.edf')
+    result = poni.integrate2d(data = normArray, filename = outfile_2d,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
+                correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
+    bubbleHeader(outfile_2d,*result[:3])
+
+def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 3, nbins = 800, outdir = 'xye', save2d = False):
     direc = os.path.dirname(file)
     fulloutdir = f'{direc}/{outdir}/'
+    os.makedirs(fulloutdir,exist_ok=True)
     outbasefile = os.path.basename(file).replace('.cbf','.xye')
     outfile = f'{fulloutdir}/{outbasefile}'
     array2th, polarray, saArray, binarray = generateDetArrays(file, ponifile, nbins)
     if not gainFile == None:
-        gainMap = fabio.open(gainMap).data
+        gainMap = fabio.open(gainFile).data
     else:
         gainMap = None
     basemask = fabio.open(maskfile).data
     dataarray = makeArray(file,polarray,saArray, gainMap)
-    mask = generateMask(dataarray, binarray, nbins, stdevs, basemask)
+    mask = generateMask(dataarray, basemask, binarray, nbins, stdevs)
     poni = pyFAI.load(ponifile)
     poni.integrate1d(dataarray, mask = mask, filename=outfile, polarization_factor=0.99, unit = '2th_deg', correctSolidAngle=True,
                      method = 'bbox', npt = 5000, error_model='poisson', safe = False)
+    clearPyFAI_header(outfile)
+    if save2d:
+        int2d(outfile, dataarray, poni, mask)
 
 def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',
         outdir = 'xye', save2d = False, saveMasks = False):
@@ -101,7 +111,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         outfile = f'{outdir}/{xyefile}'
         header = CbfHeader(file)
         monitorCounts = header['Flux']
-        mask = generateMask(dataarray,binarray,nbins, stdevs, basemask, threshold)
+        mask = generateMask(dataarray, basemask,binarray,nbins, stdevs, threshold)
         if saveMasks:
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
@@ -111,10 +121,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
                         error_model = 'poisson', safe = False)
         clearPyFAI_header(outfile)
         if save2d:
-            outfile_2d = outfile.replace('.xye','.edf')
-            result = poni.integrate2d(data = normArray, filename = outfile_2d,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
-                        correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
-            bubbleHeader(outfile_2d,*result[:3])
+            int2d(outfile, normArray, poni, mask)
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
                  ext = 'cbf', outdir = 'xye'):
