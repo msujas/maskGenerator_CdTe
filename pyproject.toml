@@ -13,7 +13,6 @@ description = "scripts for integrating and removing cosmics from bm31 PDF data"
 readme = {file = "README.MD", content-type = "text/markdown"}
 keywords = ["PDF", "total scattering"]
 classifiers = [
-"Development Status :: 4 - Beta",
 "License :: OSI Approved :: MIT License",
 "Programming Language :: Python :: 3.12"]
 
@@ -21,7 +20,10 @@ classifiers = [
 imagin = "maskGeneratorBM31.maskGeneratorIntegratorGUI:main"
 
 [tool.setuptools]
-packages = ["maskGeneratorBM31"]
+packages = ["maskGeneratorBM31", "azimuthCP"]
+ext-modules = [
+  {name = "azimuthCP", sources = ["azimuthCP/azimuth.cpp"]}
+]
 
 [project.urls]
 repository = "https://github.com/msujas/maskGenerator_CdTe.git"

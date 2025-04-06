@@ -11,7 +11,10 @@ if __name__ == '__main__':
    from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
 else:
     from . import clearPyFAI_header, gainCorrection, bubbleHeader
-
+try:
+    from azimuthCP import makeMaskCP
+except ImportError:
+    print('couldn\'t find cpp extension')
 
 datadir = r''
 poni = r''
@@ -39,6 +42,11 @@ def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
         y = np.where(binarray==n)[0]
         x = np.where(binarray==n)[1]
         newmask[[y],[x]] = maskBin
+    return newmask
+
+def generateMaskCP(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
+    args = (dataarray.tolist(), basemask.tolist(), binarray.tolist(), nbins,stdevs,threshold)
+    newmask = np.array(makeMaskCP(args))
     return newmask
 
 def makeArray(file, polArray, saArray, gainMap = None):
@@ -132,4 +140,5 @@ def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, 
         run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
 
 if __name__ == '__main__':
-    run(datadir, poni,  stdevs, maskfile, scale, threshold, polarisation,gainFile, save2d=save2d, saveMasks=saveMasks, nbins=nbins)
+    pass
+    #run(datadir, poni,  stdevs, maskfile, scale, threshold, polarisation,gainFile, save2d=save2d, saveMasks=saveMasks, nbins=nbins)
