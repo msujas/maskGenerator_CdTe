@@ -15,3 +15,11 @@ dataCut.py
 maskGeneratorBM31/guiConfig.log
 findMonitor.py
 maskImageSaver.py
+maskGeneratorBM31/azimuthGui.py
+x64
+*.pyd
+az_cppTest.py
+*.sln
+*.vcx*
+*.vs
+*.vscode
