@@ -190,7 +190,7 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
         for (int j = 0; j < indexes[i].size(); j++) {
             int y = indexes[i][j][0];
             int x = indexes[i][j][1];
-            if (dataArray[y][x] > mediandata + stdevData * 3 || dataArray[y][x] > mediandata + stdevData + threshold) {
+            if (dataArray[y][x] > mediandata + (stdevData * stdevs) || dataArray[y][x] > mediandata + stdevData + threshold) {
                 newmask[y][x] = 1;
             }
         }

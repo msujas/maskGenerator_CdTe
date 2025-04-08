@@ -34,20 +34,22 @@ def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100, 
         args = (dataarray.tolist(), basemask.tolist(), binarray.tolist(), nbins,stdevs,threshold)
         newmask = makeMaskCP(args)
         newmask = np.array(newmask)
-
         return newmask
+    #python/numpy implementation
     dataarray2 = np.where(dataarray < 0, np.nan, dataarray)
     array = np.empty(shape = dataarray.shape)
     newmask = basemask.copy()
     for n in range(nbins):
-        wherebin = np.where(binarray == n)
+        wherebin = np.where((binarray == n) & (basemask == 0))       
+        if len(wherebin[0]) == 0:
+            continue
         array =  dataarray2[wherebin]
         maskBin = basemask[wherebin]
         stdev = np.nanstd(array)
         median = np.nanmedian(array)
         maskBin = np.where((array > median + stdevs*stdev) | (array > median + stdev + threshold) , 1, maskBin)
-        y = np.where(binarray==n)[0]
-        x = np.where(binarray==n)[1]
+        y = wherebin[0]
+        x = wherebin[1]
         newmask[[y],[x]] = maskBin
     return newmask
 

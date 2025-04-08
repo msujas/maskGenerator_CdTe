@@ -10,6 +10,7 @@ stdevs = 3
 threshold = 100
 nbins = 1500
 ext = 'cbf'
-outdir = 'xye'
+outdir = 'xye_az'
+cpp = False
 
-runRecursive(direc, ponifile, maskfile, polarisation, gainfile, stdevs,scale, threshold, nbins, ext, outdir)
+runRecursive(direc, ponifile, maskfile, polarisation, gainfile, stdevs,scale, threshold, nbins, ext, outdir, cpp)
