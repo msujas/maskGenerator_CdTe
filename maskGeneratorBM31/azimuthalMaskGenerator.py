@@ -28,7 +28,14 @@ saveMasks = True
 save2d = True
 nbins = 800
 
-def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
+def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100, cpp = False):
+    #print(dataarray.shape, basemask.shape, binarray.shape)
+    if cpp:
+        args = (dataarray.tolist(), basemask.tolist(), binarray.tolist(), nbins,stdevs,threshold)
+        newmask = makeMaskCP(args)
+        newmask = np.array(newmask)
+
+        return newmask
     dataarray2 = np.where(dataarray < 0, np.nan, dataarray)
     array = np.empty(shape = dataarray.shape)
     newmask = basemask.copy()
@@ -42,11 +49,6 @@ def generateMask(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
         y = np.where(binarray==n)[0]
         x = np.where(binarray==n)[1]
         newmask[[y],[x]] = maskBin
-    return newmask
-
-def generateMaskCP(dataarray, basemask, binarray,nbins, stdevs,  threshold = 100):
-    args = (dataarray.tolist(), basemask.tolist(), binarray.tolist(), nbins,stdevs,threshold)
-    newmask = np.array(makeMaskCP(args))
     return newmask
 
 def makeArray(file, polArray, saArray, gainMap = None):
@@ -87,7 +89,7 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
         gainMap = fabio.open(gainFile).data
     else:
         gainMap = None
-    basemask = fabio.open(maskfile).data
+    basemask = fabio.open(maskfile).data.astype(np.uint8)
     dataarray = makeArray(file,polarray,saArray, gainMap)
     mask = generateMask(dataarray, basemask, binarray, nbins, stdevs)
     poni = pyFAI.load(ponifile)
@@ -98,7 +100,7 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
         int2d(outfile, dataarray, poni, mask)
 
 def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',
-        outdir = 'xye', save2d = False, saveMasks = False):
+        outdir = 'xye', save2d = False, saveMasks = False, cpp = False):
     os.chdir(datadir)
     if not os.path.exists(f'{datadir}/{outdir}/'):
         os.makedirs(f'{datadir}/{outdir}/')
@@ -106,12 +108,15 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
     cbfs = glob(f'*.{ext}')
     array2th, polarray, saArray, binarray = generateDetArrays(cbfs[0],ponifile,nbins)
     poni = pyFAI.load(ponifile)
-    maskdir = f'{datadir}/masks{stdevs}/'
+    maskdir = f'{datadir}/masks{stdevs}'
+    if cpp:
+        maskdir += 'cpp'
     if gainFile != None:
         gainMap = fabio.open(gainFile).data
     else:
         gainMap=None
-    os.makedirs(maskdir,exist_ok=True)
+    if saveMasks:
+        os.makedirs(maskdir,exist_ok=True)
     for file in cbfs:
         print(file)
         dataarray = makeArray(file,polarray, saArray,gainMap)
@@ -119,7 +124,8 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         outfile = f'{outdir}/{xyefile}'
         header = CbfHeader(file)
         monitorCounts = header['Flux']
-        mask = generateMask(dataarray, basemask,binarray,nbins, stdevs, threshold)
+        mask = generateMask(dataarray, basemask,binarray,nbins, stdevs, threshold, cpp)
+        
         if saveMasks:
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
@@ -132,12 +138,12 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
             int2d(outfile, normArray, poni, mask)
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
-                 ext = 'cbf', outdir = 'xye'):
+                 ext = 'cbf', outdir = 'xye', cpp = False):
     for root, dirs, files in os.walk(direc):
         cbfs = glob(f'{root}/*.{ext}')
         if not cbfs:
             continue
-        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False)
+        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False, cpp= cpp)
 
 if __name__ == '__main__':
     pass

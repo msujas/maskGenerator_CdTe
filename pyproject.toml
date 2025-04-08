@@ -20,7 +20,7 @@ classifiers = [
 imagin = "maskGeneratorBM31.maskGeneratorIntegratorGUI:main"
 
 [tool.setuptools]
-packages = ["maskGeneratorBM31", "azimuthCP"]
+packages = ["maskGeneratorBM31"]
 ext-modules = [
   {name = "azimuthCP", sources = ["azimuthCP/azimuth.cpp"]}
 ]

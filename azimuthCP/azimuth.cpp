@@ -1,13 +1,20 @@
+//#include <Windows.h>
 #include <python.h>
 #include <vector>
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <string>
+#include <iostream>
 //#include <pybind11/pybind11.h>
 using std::vector;
 using std::logic_error;
+using std::string;
 //namespace py = pybind11;
 
+void printS(string input, char endl = '\n') {
+    std::cout << input << endl;
+}
 
 static float mean(vector<float> data) {
     float sum = 0;
@@ -59,6 +66,7 @@ static vector<float> listToVector_Float(PyObject* incoming) {
             PyObject* value = PyList_GetItem(incoming, i);
             data.push_back(PyFloat_AsDouble(value));
         }
+        
     }
     else {
         throw logic_error("Passed PyObject pointer was not a list!");
@@ -116,7 +124,7 @@ PyObject* vectorToList_Float2d(const vector<vector<float>>& data) {
     PyObject* listObj = PyList_New(data.size());
     if (!listObj) throw logic_error("Unable to allocate memory for Python list");
     for (unsigned int i = 0; i < data.size(); i++) {
-        PyObject* templistObj = PyList_New(data.size());
+        PyObject* templistObj = PyList_New(data[i].size());
         for (unsigned int j = 0; j < data[i].size(); j++) {
             PyObject* num = PyFloat_FromDouble((double)data[i][j]);
             if (!num) {
@@ -134,7 +142,7 @@ PyObject* vectorToList_int2d(const vector<vector<int>>& data) {
     PyObject* listObj = PyList_New(data.size());
     if (!listObj) throw logic_error("Unable to allocate memory for Python list");
     for (unsigned int i = 0; i < data.size(); i++) {
-        PyObject* templistObj = PyList_New(data.size());
+        PyObject* templistObj = PyList_New(data[i].size());
         for (unsigned int j = 0; j < data[i].size(); j++) {
             PyObject* num = PyLong_FromLong((int)data[i][j]);
             if (!num) {
@@ -151,19 +159,32 @@ PyObject* vectorToList_int2d(const vector<vector<int>>& data) {
 vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<int>> basemask,  vector<vector<int>> binArray,
         uint16_t nbins,  uint8_t stdevs, uint16_t threshold) {
     vector<vector<int>> newmask = basemask;
-    vector < vector<float>> binnedData(nbins);
-    vector < vector<vector<int>>> indexes(nbins);
+    vector<vector<float>> binnedData(nbins);
+    vector<vector<vector<int>>> indexes(nbins);
 
+
+    if ( ! ((dataArray.size() == basemask.size() && dataArray.size() == binArray.size()) &&
+        (dataArray[0].size() == basemask[0].size() && dataArray[0].size() == binArray[0].size()))) {
+        std::cout << "array size mismatch\n";
+        std::cout << "data shape: " << dataArray.size() << ',' << dataArray[0].size() << '\n';
+        std::cout << "mask shape: " << basemask.size() << ',' << basemask[0].size() << '\n';
+        std::cout << "bin shape: " << binArray.size() << ',' << binArray[0].size() << '\n';
+    }
     for (int y = 0; y < dataArray.size(); y++) {
         for (int x = 0; x < dataArray[0].size(); x++) {
-            if (dataArray[y][x] >= 0) {
-                binnedData[binArray[y][x]].push_back(dataArray[y][x]);
-                indexes[binArray[y][x]].push_back({ y,x });
+            if ((dataArray[y][x] >= 0) && (basemask[y][x] == 0)) {
+                binnedData[binArray[y][x]-1].push_back(dataArray[y][x]);
+                indexes[binArray[y][x]-1].push_back({ y,x });
             }
         }
     }
+    
+
     for (int i = 0; i < nbins; i++) {
         vector<float> data = binnedData[i];
+        if (data.size() == 0) {
+            continue;
+        }
         float mediandata = median(data);
         double stdevData = stdev(data);
         for (int j = 0; j < indexes[i].size(); j++) {
@@ -179,7 +200,9 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
 
 PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
     if (!PyTuple_Check(argTup)) {
-        throw logic_error("Passed PyObject pointer was not a tuple!");
+        string message = "Passed PyObject pointer was not a tuple!";
+        std::cout << message << '\n';
+        throw logic_error(message);
     }
     PyObject* dataPy = PyTuple_GetItem(argTup, 0);
     PyObject* baseMaskPy = PyTuple_GetItem(argTup, 1);
@@ -188,16 +211,19 @@ PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
     PyObject* stdevsPy = PyTuple_GetItem(argTup, 4);
     PyObject* thresholdPy = PyTuple_GetItem(argTup, 5);
 
+
     vector<vector<float>> dataArray = listToVector_Float2d(dataPy);
     vector<vector<int>> baseMask = listToVector_int2d(baseMaskPy);
     vector<vector<int>> binArray = listToVector_int2d(binArrayPy);
     int nbins = PyLong_AsLong(nbinsPy);
     int stdevs = PyLong_AsLong(stdevsPy); 
     int threshold = PyLong_AsLong(thresholdPy);
+    printS("data converted");
     vector<vector<int>> newmask = generateMask(dataArray, baseMask, binArray, nbins, stdevs,
         threshold);
+    printS("mask calculated");
     PyObject* newmaskPy = vectorToList_int2d(newmask);
-
+    printS("mask converted to Python");
     return newmaskPy;
 }
 
