@@ -11,7 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os, pathlib
 if __name__ == '__main__':
-    from maskGeneratorBM31.azimuthalMaskGenerator import runRecursive
+    from azimuthalMaskGenerator import runRecursive
 else:
     from .azimuthalMaskGenerator import runRecursive
 
