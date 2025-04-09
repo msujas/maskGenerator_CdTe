@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import os
+import os, time
 if __name__ == '__main__':
     from azimuthalMaskGenerator import runRecursive
 else:
@@ -38,9 +38,14 @@ class Worker(QtCore.QThread):
         self.running = True
         print('running')
         #direc, ponifile, maskfile, polarisation, gainfile, stdevs,scale, threshold, nbins, ext, outdir
-        runRecursive(self.direc,self.poni,self.mask, 0.99, self.gainFile, self.stdevs,10**5, self.threshold, self.nbins, outdir = self.outdir, saveMasks=self.saveMasks, 
-                     cpp = True)
-        print('finished')
+        allFiles = []
+        while True:
+            newallFiles = runRecursive(self.direc,self.poni,self.mask, 0.99, self.gainFile, self.stdevs,10**5, self.threshold, self.nbins, outdir = self.outdir, saveMasks=self.saveMasks, 
+                     cpp = True, allFiles=allFiles)
+            if newallFiles != allFiles:
+                print('finished, looking for new files')
+            allFiles = newallFiles
+            time.sleep(1)
         self.outputs.emit(True)
     def stop(self):
         self.terminate()

@@ -102,12 +102,13 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
         int2d(outfile, dataarray, poni, mask)
 
 def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',
-        outdir = 'xye', save2d = False, saveMasks = False, cpp = False):
+        outdir = 'xye', save2d = False, saveMasks = False, cpp = False, allFiles = None):
     os.chdir(datadir)
     if not os.path.exists(f'{datadir}/{outdir}/'):
         os.makedirs(f'{datadir}/{outdir}/')
     basemask = fabio.open(maskfile).data
     cbfs = glob(f'*.{ext}')
+    cbfs.sort()
     array2th, polarray, saArray, binarray = generateDetArrays(cbfs[0],ponifile,nbins)
     poni = pyFAI.load(ponifile)
     maskdir = f'{datadir}/masks{stdevs}'
@@ -119,13 +120,25 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         gainMap=None
     if saveMasks:
         os.makedirs(maskdir,exist_ok=True)
+    if allFiles == None:
+        allFiles = []
+    allFilesR = [f for f in allFiles]
     for file in cbfs:
+        
+        fullfile = f'{datadir}/{file}'
+        if fullfile not in allFilesR:
+            allFilesR.append(fullfile)
+        else:
+            continue
         print(file)
         dataarray = makeArray(file,polarray, saArray,gainMap)
         xyefile = file.replace('.cbf','.xye')
         outfile = f'{outdir}/{xyefile}'
         header = CbfHeader(file)
-        monitorCounts = header['Flux']
+        monitorCounts = 1
+        if 'Flux' in header:
+            monitorCounts = header['Flux']
+        
         mask = generateMask(dataarray, basemask,binarray,nbins, stdevs, threshold, cpp)
         
         if saveMasks:
@@ -138,15 +151,21 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         clearPyFAI_header(outfile)
         if save2d:
             int2d(outfile, normArray, poni, mask)
+    return allFilesR
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
-                 ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False):
+                 ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False, allFiles = None):
+    if allFiles == None:
+        allFiles = []
+    allFilesR = [f for f in allFiles]
     for root, dirs, files in os.walk(direc):
         cbfs = glob(f'{root}/*.{ext}')
-        cbfs.sort()
         if not cbfs:
             continue
-        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=save2d, saveMasks=saveMasks, cpp= cpp)
+        allFilesR = run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=save2d, 
+            saveMasks=saveMasks, cpp= cpp, allFiles=allFilesR)
+        
+    return allFilesR
 
 if __name__ == '__main__':
     pass
