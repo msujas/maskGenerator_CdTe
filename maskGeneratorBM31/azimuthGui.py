@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import os, pathlib
+import os
 if __name__ == '__main__':
     from azimuthalMaskGenerator import runRecursive
 else:

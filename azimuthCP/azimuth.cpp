@@ -1,4 +1,3 @@
-//#include <Windows.h>
 #include <Python.h>
 #include <vector>
 #include <cmath>
@@ -242,7 +241,7 @@ static PyMethodDef azimuthCP_methods[] = {
 static PyModuleDef azimuthCP_module = {
     PyModuleDef_HEAD_INIT,
     "azimuthCP",                        // Module name to use with Python import statements
-    "Provides some functions, but faster",  // Module description
+    "adds a faster mask generator function",  // Module description
     0,
     azimuthCP_methods                   // Structure that defines the methods of the module
 };

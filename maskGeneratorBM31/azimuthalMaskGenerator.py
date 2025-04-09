@@ -143,6 +143,7 @@ def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, 
                  ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False):
     for root, dirs, files in os.walk(direc):
         cbfs = glob(f'{root}/*.{ext}')
+        cbfs.sort()
         if not cbfs:
             continue
         run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=save2d, saveMasks=saveMasks, cpp= cpp)

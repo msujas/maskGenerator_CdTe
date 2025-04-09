@@ -27,7 +27,11 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
         fileList = []
     os.chdir(direc)
     mask = fabio.open(mask).data
-    poni = pyFAI.load(poni)
+    if isinstance(poni,str):
+        poni = pyFAI.load(poni)
+    elif not isinstance(poni,pyFAI.integrator.azimuthal.AzimuthalIntegrator):
+        print('poni argument must be string or pyFAI azimuthal integrator type')
+
     runningFull = False
     for root, dirs, files in os.walk(direc):
         if avdir in root or 'badFrames' in root or folderPattern not in root:

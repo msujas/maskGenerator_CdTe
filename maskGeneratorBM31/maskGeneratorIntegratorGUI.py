@@ -13,13 +13,14 @@ else:
     from . import maskGeneratorIntegraterCdTe
     from . import maskGeneratorCdTe_recursive
 from PyQt6 import QtCore, QtGui, QtWidgets
-import os,time 
+import os,time
+import pyFAI
 
 class Worker(QtCore.QThread):
     def __init__(self,direc,poni, mask,gainFile,recursePattern):
         super(Worker,self).__init__()
         self.direc = direc
-        self.poni = poni
+        self.poni = pyFAI.load(poni)
         self.mask = mask
         self.gainFile = gainFile
         self.recursePattern = recursePattern
