@@ -7,9 +7,9 @@ import pyFAI
 import pyFAI.geometry
 import os
 from glob import glob
-if __name__ == '__main__':
+try:
    from integrationFunctions import clearPyFAI_header, gainCorrection, bubbleHeader
-else:
+except ImportError:
     from . import clearPyFAI_header, gainCorrection, bubbleHeader
 try:
     from azimuthCP import makeMaskCP
@@ -140,12 +140,12 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
             int2d(outfile, normArray, poni, mask)
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
-                 ext = 'cbf', outdir = 'xye', cpp = False):
+                 ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False):
     for root, dirs, files in os.walk(direc):
         cbfs = glob(f'{root}/*.{ext}')
         if not cbfs:
             continue
-        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=False, saveMasks=False, cpp= cpp)
+        run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=save2d, saveMasks=saveMasks, cpp= cpp)
 
 if __name__ == '__main__':
     pass

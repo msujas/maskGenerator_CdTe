@@ -157,7 +157,7 @@ PyObject* vectorToList_int2d(const vector<vector<int>>& data) {
 }
 
 vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<int>> basemask,  vector<vector<int>> binArray,
-        uint16_t nbins,  uint8_t stdevs, uint16_t threshold) {
+        uint16_t nbins,  float stdevs, uint16_t threshold) {
     vector<vector<int>> newmask = basemask;
     vector<vector<float>> binnedData(nbins);
     vector<vector<vector<int>>> indexes(nbins);
@@ -216,14 +216,14 @@ PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
     vector<vector<int>> baseMask = listToVector_int2d(baseMaskPy);
     vector<vector<int>> binArray = listToVector_int2d(binArrayPy);
     int nbins = PyLong_AsLong(nbinsPy);
-    int stdevs = PyLong_AsLong(stdevsPy); 
+    float stdevs = PyFloat_AsDouble(stdevsPy); 
     int threshold = PyLong_AsLong(thresholdPy);
-    printS("data converted");
+
     vector<vector<int>> newmask = generateMask(dataArray, baseMask, binArray, nbins, stdevs,
         threshold);
-    printS("mask calculated");
+    
     PyObject* newmaskPy = vectorToList_int2d(newmask);
-    printS("mask converted to Python");
+    printS("mask calculated");
     return newmaskPy;
 }
 
