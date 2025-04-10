@@ -23,7 +23,7 @@ def textToBool(val):
 
 class Worker(QtCore.QThread):
     outputs = QtCore.pyqtSignal(bool)
-    def __init__(self,direc,poni, mask,gainFile,stdevs, threshold, nbins, outdir, saveMasks):
+    def __init__(self,direc,poni, mask,gainFile,stdevs, threshold, nbins, outdir, saveMasks, save2d):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = poni
@@ -34,6 +34,7 @@ class Worker(QtCore.QThread):
         self.nbins = nbins
         self.outdir = outdir
         self.saveMasks = saveMasks
+        self.save2d = save2d
     def run(self):
         self.running = True
         print('running')
@@ -41,7 +42,7 @@ class Worker(QtCore.QThread):
         allFiles = []
         while True:
             newallFiles = runRecursive(self.direc,self.poni,self.mask, 0.99, self.gainFile, self.stdevs,10**5, self.threshold, self.nbins, outdir = self.outdir, saveMasks=self.saveMasks, 
-                     cpp = True, allFiles=allFiles)
+                     cpp = True, allFiles=allFiles, save2d=self.save2d)
             if newallFiles != allFiles:
                 print('finished, looking for new files')
             allFiles = newallFiles
@@ -167,6 +168,12 @@ class Ui_MainWindow(object):
         self.saveMasksBox.setText("save masks")
         self.saveMasksBox.adjustSize()
 
+        self.save2dBox = QtWidgets.QCheckBox(self.centralwidget)
+        self.save2dBox.setGeometry(QtCore.QRect(420, 200, 20 , 20))
+        self.save2dBox.setObjectName("save2dBox")
+        self.save2dBox.setText("save cake")
+        self.save2dBox.adjustSize()
+
         self.outdirBox = QtWidgets.QLineEdit(self.centralwidget)
         self.outdirBox.setGeometry(QtCore.QRect(10, 200, 100, 20))
         self.outdirBox.setObjectName("outdirBox")
@@ -229,10 +236,11 @@ class Ui_MainWindow(object):
         threshold = self.threshBox.value()
         nbins = self.binBox.value()
         saveMasks = self.saveMasksBox.isChecked()
+        save2d = self.save2dBox.isChecked()
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.running = True
-        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks)
+        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks, save2d)
         self.thread.start()
         self.thread.outputs.connect(self.swapButtons)
         #self.running = False

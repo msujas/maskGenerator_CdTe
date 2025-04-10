@@ -168,6 +168,10 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
     }
     for (int y = 0; y < dataArray.size(); y++) {
         for (int x = 0; x < dataArray[0].size(); x++) {
+            if ((dataArray[y][x] < 0) && (basemask[y][x]) == 0){
+                newmask[y][x] = 1;
+                continue;
+            }
             if ((dataArray[y][x] >= 0) && (basemask[y][x] == 0)) {
                 binnedData[binArray[y][x]-1].push_back(dataArray[y][x]);
                 indexes[binArray[y][x]-1].push_back({ y,x });

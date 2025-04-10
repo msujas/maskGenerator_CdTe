@@ -149,8 +149,10 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
                         unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
                         error_model = 'poisson', safe = False) #not applying polarisation and solid angle as already applied earlier
         clearPyFAI_header(outfile)
+        print('file integrated')
         if save2d:
             int2d(outfile, normArray, poni, mask)
+            print('cake saved')
     return allFilesR
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
