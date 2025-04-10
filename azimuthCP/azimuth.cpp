@@ -65,7 +65,6 @@ static vector<float> listToVector_Float(PyObject* incoming) {
             PyObject* value = PyList_GetItem(incoming, i);
             data.push_back(PyFloat_AsDouble(value));
         }
-        
     }
     else {
         throw logic_error("Passed PyObject pointer was not a list!");
@@ -75,7 +74,6 @@ static vector<float> listToVector_Float(PyObject* incoming) {
 
 static vector<int> listToVector_Int(PyObject* incoming) {
     vector<int> data;
-
     if (PyList_Check(incoming)) {
         for (Py_ssize_t i = 0; i < PyList_Size(incoming); i++) {
             PyObject* value = PyList_GetItem(incoming, i);
@@ -161,7 +159,6 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
     vector<vector<float>> binnedData(nbins);
     vector<vector<vector<int>>> indexes(nbins);
 
-
     if ( ! ((dataArray.size() == basemask.size() && dataArray.size() == binArray.size()) &&
         (dataArray[0].size() == basemask[0].size() && dataArray[0].size() == binArray[0].size()))) {
         std::cout << "array size mismatch\n";
@@ -177,8 +174,6 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
             }
         }
     }
-    
-
     for (int i = 0; i < nbins; i++) {
         vector<float> data = binnedData[i];
         if (data.size() == 0) {

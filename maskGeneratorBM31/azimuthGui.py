@@ -168,12 +168,12 @@ class Ui_MainWindow(object):
         self.saveMasksBox.adjustSize()
 
         self.outdirBox = QtWidgets.QLineEdit(self.centralwidget)
-        self.outdirBox.setGeometry(QtCore.QRect(10, 200, 40, 20))
+        self.outdirBox.setGeometry(QtCore.QRect(10, 200, 100, 20))
         self.outdirBox.setObjectName("outdirBox")
         self.outdirBox.setText('xye')
         
         self.outdirLabel = QtWidgets.QLabel(self.centralwidget)
-        self.outdirLabel.setGeometry(QtCore.QRect(60, 200, 71, 16))
+        self.outdirLabel.setGeometry(QtCore.QRect(120, 200, 71, 16))
         self.outdirLabel.setObjectName("outdirLabel")
         self.outdirLabel.setText('output directory')
         self.outdirLabel.adjustSize()
@@ -231,20 +231,25 @@ class Ui_MainWindow(object):
         saveMasks = self.saveMasksBox.isChecked()
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks)
         self.running = True
+        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks)
         self.thread.start()
         self.thread.outputs.connect(self.swapButtons)
-    
+        #self.running = False
     def stopWorker(self):
         self.thread.stop()
         self.swapButtons(True)
-
+        print('stopping')
+        self.running = False
+    def stopIfRunning(self):
+        if self.running:
+            self.stopWorker()
     def swapButtons(self, output):
         self.runButton.setEnabled(output)
         self.stopButton.setEnabled(not output)
     
     def selectFolder(self):
+        self.stopIfRunning()
         if self.directoryBox.text():
             currentdir = self.directoryBox.text()
         else:
@@ -254,6 +259,7 @@ class Ui_MainWindow(object):
             self.directoryBox.setText(dialog)
             self.writeConfig()
     def selectPoni(self):
+        self.stopIfRunning()
         if self.poniBox.text():
             currentdir = os.path.dirname(self.poniBox.text())
         else:
@@ -265,6 +271,7 @@ class Ui_MainWindow(object):
             self.writeConfig()
 
     def selectMask(self):
+        self.stopIfRunning()
         if self.maskBox.text():
             currentdir = os.path.dirname(self.maskBox.text())
         else:
@@ -276,6 +283,7 @@ class Ui_MainWindow(object):
             self.writeConfig()
 
     def selectGainFile(self):
+        self.stopIfRunning()
         if self.gainMapBox.text():
             currentdir = os.path.dirname(self.gainMapBox.text())
         else:
@@ -287,7 +295,6 @@ class Ui_MainWindow(object):
             self.gainMapBox.setText(dialog[0])
             self.updateConfig()
             self.writeConfig()
-
 
     def updateConfig(self):
         items = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.stdevBox, self.threshBox, self.binBox, self.outdirBox]
