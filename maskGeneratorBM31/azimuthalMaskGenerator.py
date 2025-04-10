@@ -61,7 +61,7 @@ def makeArray(file, polArray, saArray, gainMap = None):
         dataarray = gainCorrection(dataarray, gainMap)
     return dataarray
 
-def generateDetArrays(cbffile, ponifile, nbins):
+def generateDetArrays(cbffile, ponifile, nbins, polarisation):
     dataarray = CbfImage(cbffile).array
     poni = pyFAI.load(ponifile)
     geometry = pyFAI.geometry.Geometry()
@@ -109,7 +109,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
     basemask = fabio.open(maskfile).data
     cbfs = glob(f'*.{ext}')
     cbfs.sort()
-    array2th, polarray, saArray, binarray = generateDetArrays(cbfs[0],ponifile,nbins)
+    array2th, polarray, saArray, binarray = generateDetArrays(cbfs[0],ponifile,nbins, polarisation)
     poni = pyFAI.load(ponifile)
     maskdir = f'{datadir}/masks{stdevs}'
     if cpp:
@@ -145,9 +145,9 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
         normArray = (dataarray/monitorCounts) * scale
-        poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = polarisation,
-                        unit = '2th_deg', correctSolidAngle = True, method = 'bbox', npt = 5000, 
-                        error_model = 'poisson', safe = False)
+        poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = None,
+                        unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
+                        error_model = 'poisson', safe = False) #not applying polarisation and solid angle as already applied earlier
         clearPyFAI_header(outfile)
         if save2d:
             int2d(outfile, normArray, poni, mask)
