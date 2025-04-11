@@ -118,6 +118,13 @@ class Ui_MainWindow(object):
         self.gainLabel.setGeometry(QtCore.QRect(480, 140, 71, 16))
         self.gainLabel.setObjectName("gainLabel")
 
+        self.disableGain = QtWidgets.QCheckBox(self.centralwidget)
+        self.disableGain.setGeometry(550,140, 60,20)
+        self.disableGain.setObjectName("disableGain")
+        self.disableGain.setText('disable?')
+        self.disableGain.adjustSize()
+        
+
         self.stdevBox = QtWidgets.QDoubleSpinBox(self.centralwidget)
         self.stdevBox.setGeometry(QtCore.QRect(10, 170, 50 , 40))
         self.stdevBox.setObjectName('stdevBox')
@@ -191,6 +198,7 @@ class Ui_MainWindow(object):
         self.poniButton.clicked.connect(self.selectPoni)
         self.maskButton.clicked.connect(self.selectMask)
         self.gainMapButton.clicked.connect(self.selectGainFile)
+        self.disableGain.stateChanged.connect(self.toggleGain)
 
         self.running = False
 
@@ -230,7 +238,7 @@ class Ui_MainWindow(object):
         maskfile = self.maskBox.text()
         gainfile = self.gainMapBox.text()
         outdir = self.outdirBox.text()
-        if not gainfile:
+        if not gainfile or self.disableGain.isChecked():
             gainfile = None
         stdevs = self.stdevBox.value()
         threshold = self.threshBox.value()
@@ -289,6 +297,10 @@ class Ui_MainWindow(object):
         if dialog[0]:
             self.maskBox.setText(dialog[0])
             self.writeConfig()
+        
+    def toggleGain(self):
+        self.gainMapBox.setEnabled(not self.disableGain.isChecked())
+
 
     def selectGainFile(self):
         self.stopIfRunning()

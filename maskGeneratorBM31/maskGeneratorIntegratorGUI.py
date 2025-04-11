@@ -40,7 +40,7 @@ class Worker(QtCore.QThread):
             if runningFull:
                 print('looking for new files')
     def stop(self):
-        self.running = False
+        self.terminate()
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

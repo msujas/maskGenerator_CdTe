@@ -70,7 +70,7 @@ def generateDetArrays(cbffile, ponifile, nbins, polarisation):
     polarray  = geometry.polarization(factor = polarisation)
     saArray = geometry.solidAngleArray()
     binsize = np.max(array2th)/nbins
-    binarray = (array2th/binsize).astype(np.uint16)
+    binarray = ((array2th+binsize/2)*(nbins-1)//np.max(array2th)).astype(np.uint16)
     binarray = np.where(dataarray < 0, -1, binarray)
     return array2th, polarray, saArray, binarray
 

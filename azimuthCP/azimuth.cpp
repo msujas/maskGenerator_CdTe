@@ -34,18 +34,16 @@ static vector<float> allPos(vector<float> data) {
 }
 
 static float median(vector<float> data) {
-
-    float median;
-    //int datasize = data.size();
+    float medianValue;
     std::sort(data.begin(), data.end());
 
     if (data.size() % 2 == 0) {
-        median = (data[data.size() / 2] + (data[(data.size() / 2) - 1])) / 2;
+        medianValue = (data[data.size() / 2] + (data[(data.size() / 2) - 1])) / 2;
     }
     else {
-        median = data[data.size() / 2];
+        medianValue = data[data.size() / 2];
     }
-    return median;
+    return medianValue;
 }
 
 static double stdev(vector<float> data) {
@@ -155,7 +153,6 @@ PyObject* vectorToList_int2d(const vector<vector<int>>& data) {
 
 vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<int>> basemask,  vector<vector<int>> binArray,
         uint16_t nbins,  float stdevs, uint16_t threshold) {
-    vector<vector<int>> newmask = basemask;
     vector<vector<float>> binnedData(nbins);
     vector<vector<vector<int>>> indexes(nbins);
 
@@ -165,16 +162,17 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
         std::cout << "data shape: " << dataArray.size() << ',' << dataArray[0].size() << '\n';
         std::cout << "mask shape: " << basemask.size() << ',' << basemask[0].size() << '\n';
         std::cout << "bin shape: " << binArray.size() << ',' << binArray[0].size() << '\n';
+        throw std::runtime_error("array mismatch");
     }
     for (int y = 0; y < dataArray.size(); y++) {
         for (int x = 0; x < dataArray[0].size(); x++) {
             if ((dataArray[y][x] < 0) && (basemask[y][x]) == 0){
-                newmask[y][x] = 1;
+                basemask[y][x] = 1;
                 continue;
             }
             if ((dataArray[y][x] >= 0) && (basemask[y][x] == 0)) {
-                binnedData[binArray[y][x]-1].push_back(dataArray[y][x]);
-                indexes[binArray[y][x]-1].push_back({ y,x });
+                binnedData[binArray[y][x]].push_back(dataArray[y][x]);
+                indexes[binArray[y][x]].push_back({ y,x });
             }
         }
     }
@@ -189,11 +187,11 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
             int y = indexes[i][j][0];
             int x = indexes[i][j][1];
             if (dataArray[y][x] > mediandata + (stdevData * stdevs) || dataArray[y][x] > mediandata + stdevData + threshold) {
-                newmask[y][x] = 1;
+                basemask[y][x] = 1;
             }
         }
     }
-    return newmask;
+    return basemask;
 }
 
 PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
