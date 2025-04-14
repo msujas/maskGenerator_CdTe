@@ -76,9 +76,10 @@ def generateDetArrays(cbffile, ponifile, nbins, polarisation):
 
 def int2d(outfile1d, normArray, poni, mask):
     outfile_2d = outfile1d.replace('.xye','.edf')
-    result = poni.integrate2d(data = normArray, filename = outfile_2d,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
+    result = poni.integrate2d(data = normArray, filename = None,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
                 correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
     bubbleHeader(outfile_2d,*result[:3])
+    return result
 
 def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 3, nbins = 800, outdir = 'xye', save2d = False):
     direc = os.path.dirname(file)
@@ -102,10 +103,14 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
         int2d(outfile, dataarray, poni, mask)
 
 def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisation = 0.99, gainFile = None, nbins = 800, ext = 'cbf',
-        outdir = 'xye', save2d = False, saveMasks = False, cpp = False, allFiles = None):
+        outdir = 'xye', save2d = False, saveMasks = False, cpp = False, allFiles = None, averaging = 1):
     os.chdir(datadir)
     if not os.path.exists(f'{datadir}/{outdir}/'):
         os.makedirs(f'{datadir}/{outdir}/')
+    outdirav = f'{datadir}/{outdir}_av{averaging}'
+    if averaging > 1 and not os.path.exists(outdirav):
+        os.makedirs(outdirav)
+        
     basemask = fabio.open(maskfile).data
     cbfs = glob(f'*.{ext}')
     cbfs.sort()
@@ -123,8 +128,8 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
     if allFiles == None:
         allFiles = []
     allFilesR = [f for f in allFiles]
+    av = 0
     for file in cbfs:
-        
         fullfile = f'{datadir}/{file}'
         if fullfile not in allFilesR:
             allFilesR.append(fullfile)
@@ -145,18 +150,65 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
         normArray = (dataarray/monitorCounts) * scale
-        poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = None,
+        '''
+        if averaging > 1:
+
+            if av == 0:
+                avArray = np.empty(shape = (*normArray.shape, averaging))
+            avArray[:,:,av] = np.where(mask == 1, -1, normArray)
+            if av == averaging-1 or file == cbfs[-1]:
+                avArray = np.where(avArray < 0, np.nan, avArray)
+                avArray = np.nanmean(avArray, axis =2)
+                avArray = np.where(np.isnan(avArray), -1, avArray)
+                maskav = np.where(avArray < 0, 1, 0)
+                outfileav = f'{outdirav}/{xyefile}'
+                poni.integrate1d(avArray,mask = maskav, filename = outfileav, polarization_factor = None,
+                unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
+                error_model = 'poisson', safe = False) #not applying polarisation and solid angle as already applied earlier
+                av = 0
+                if save2d:
+                    int2d(outfileav, avArray, poni, maskav)
+        '''
+        
+        x,y,e = poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = None,
                         unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
                         error_model = 'poisson', safe = False) #not applying polarisation and solid angle as already applied earlier
+        if averaging > 1:
+            if av == 0:
+                yarray = np.empty(shape = (len(y),averaging))
+                earray = np.empty(shape = (len(y),averaging))
+            yarray[:,av] = y
+            earray[:,av] = e
+            if av == averaging - 1:
+                outfileav = f'{outdirav}/{xyefile}'
+                yarray = np.mean(yarray,axis = 1)
+                earray = np.mean(earray,axis = 1)
+                np.savetxt(outfileav, np.array([x,yarray,earray]).transpose(), fmt = "%.6f")
+                
         clearPyFAI_header(outfile)
         print('file integrated')
         if save2d:
-            int2d(outfile, normArray, poni, mask)
+            result = int2d(outfile, normArray, poni, mask)
             print('cake saved')
+            if averaging > 1:
+                if av == 0:
+                    resultav = np.empty(shape = (*result[0].shape, averaging))
+                resultav[:,:,av] = result[0]
+                if av == averaging - 1:
+                    resultav = np.mean(resultav, axis = 2)
+                    #cakeim = fabio.edfimage.EdfImage(resultav)
+                    outfileav2d = outfileav.replace('.xye','.edf')
+                    #cakeim.save(outfileav2d)
+                    bubbleHeader(outfileav2d, resultav, result[1],result[2])
+        if av == averaging -1:
+            av = -1
+        av += 1
+
+            
     return allFilesR
             
 def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, stdevs = 4, scale=1, threshold = 100, nbins= 800, 
-                 ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False, allFiles = None):
+                 ext = 'cbf', outdir = 'xye', cpp = False, saveMasks = False, save2d = False, allFiles = None, averaging : int = 1):
     if allFiles == None:
         allFiles = []
     allFilesR = [f for f in allFiles]
@@ -165,7 +217,7 @@ def runRecursive(direc, ponifile, maskfile, polarisation = 0.99, gainFile=None, 
         if not cbfs:
             continue
         allFilesR = run(root,ponifile, stdevs, maskfile, scale, threshold, polarisation, gainFile, nbins, ext,outdir, save2d=save2d, 
-            saveMasks=saveMasks, cpp= cpp, allFiles=allFilesR)
+            saveMasks=saveMasks, cpp= cpp, allFiles=allFilesR, averaging=averaging)
         
     return allFilesR
 

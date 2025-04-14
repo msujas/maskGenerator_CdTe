@@ -23,7 +23,7 @@ def textToBool(val):
 
 class Worker(QtCore.QThread):
     outputs = QtCore.pyqtSignal(bool)
-    def __init__(self,direc,poni, mask,gainFile,stdevs, threshold, nbins, outdir, saveMasks, save2d):
+    def __init__(self,direc,poni, mask,gainFile,stdevs, threshold, nbins, outdir, saveMasks, save2d, averaging):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = poni
@@ -35,6 +35,7 @@ class Worker(QtCore.QThread):
         self.outdir = outdir
         self.saveMasks = saveMasks
         self.save2d = save2d
+        self.averaging = averaging
     def run(self):
         self.running = True
         print('running')
@@ -42,7 +43,7 @@ class Worker(QtCore.QThread):
         allFiles = []
         while True:
             newallFiles = runRecursive(self.direc,self.poni,self.mask, 0.99, self.gainFile, self.stdevs,10**5, self.threshold, self.nbins, outdir = self.outdir, saveMasks=self.saveMasks, 
-                     cpp = True, allFiles=allFiles, save2d=self.save2d)
+                     cpp = True, allFiles=allFiles, save2d=self.save2d, averaging = self.averaging)
             if newallFiles != allFiles:
                 print('finished, looking for new files')
             allFiles = newallFiles
@@ -192,6 +193,21 @@ class Ui_MainWindow(object):
         self.outdirLabel.setText('output directory')
         self.outdirLabel.adjustSize()
 
+        self.avBox = QtWidgets.QSpinBox(self.centralwidget)
+        self.avBox.setGeometry(QtCore.QRect(210, 200, 100 , 40))
+        self.avBox.setObjectName('avBox')
+        self.avBox.setMaximum(10000)
+        self.avBox.setSingleStep(1)
+        self.avBox.setValue(1)
+        self.avBox.adjustSize()
+
+        self.avLabel = QtWidgets.QLabel(self.centralwidget)
+        self.avLabel.setGeometry(QtCore.QRect(270, 200, 71, 16))
+        self.avLabel.setObjectName("avLabel")
+        self.avLabel.setText('averaging')
+        self.avLabel.adjustSize()  
+
+
         self.runButton.clicked.connect(self.startWorker)
         self.stopButton.clicked.connect(self.stopWorker)
         self.dirButton.clicked.connect(self.selectFolder)
@@ -245,10 +261,11 @@ class Ui_MainWindow(object):
         nbins = self.binBox.value()
         saveMasks = self.saveMasksBox.isChecked()
         save2d = self.save2dBox.isChecked()
+        averaging = self.avBox.value()
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.running = True
-        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks, save2d)
+        self.thread = Worker(directory, ponifile, maskfile, gainfile, stdevs, threshold, nbins, outdir, saveMasks, save2d,averaging)
         self.thread.start()
         self.thread.outputs.connect(self.swapButtons)
         #self.running = False

@@ -164,8 +164,10 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
         std::cout << "bin shape: " << binArray.size() << ',' << binArray[0].size() << '\n';
         throw std::runtime_error("array mismatch");
     }
-    for (int y = 0; y < dataArray.size(); y++) {
-        for (int x = 0; x < dataArray[0].size(); x++) {
+    int y;
+    int x;
+    for ( y = 0; y < dataArray.size(); y++) {
+        for ( x = 0; x < dataArray[0].size(); x++) {
             if ((dataArray[y][x] < 0) && (basemask[y][x]) == 0){
                 basemask[y][x] = 1;
                 continue;
@@ -184,8 +186,8 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
         float mediandata = median(data);
         double stdevData = stdev(data);
         for (int j = 0; j < indexes[i].size(); j++) {
-            int y = indexes[i][j][0];
-            int x = indexes[i][j][1];
+            y = indexes[i][j][0];
+            x = indexes[i][j][1];
             if (dataArray[y][x] > mediandata + (stdevData * stdevs) || dataArray[y][x] > mediandata + stdevData + threshold) {
                 basemask[y][x] = 1;
             }
