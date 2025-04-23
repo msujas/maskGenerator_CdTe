@@ -242,8 +242,11 @@ class Ui_MainWindow(object):
         self.poniButton.setText(_translate("MainWindow", "..."))
         self.gainMapButton.setText(_translate("MainWindow", "..."))
         self.directoryLabel.setText(_translate("MainWindow", "directory"))
+        self.directoryLabel.adjustSize()
         self.poniLabel.setText(_translate("MainWindow", "poni file"))
+        self.poniLabel.adjustSize()
         self.maskLabel.setText(_translate("MainWindow", "mask file"))
+        self.maskLabel.adjustSize()
         self.gainLabel.setText(_translate("MainWindow", "gain map file\n(optional)"))
         self.gainLabel.adjustSize()
 

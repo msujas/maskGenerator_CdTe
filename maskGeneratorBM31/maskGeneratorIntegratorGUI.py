@@ -17,20 +17,21 @@ import os,time
 import pyFAI
 
 class Worker(QtCore.QThread):
-    def __init__(self,direc,poni, mask,gainFile,recursePattern):
+    def __init__(self,direc,poni, mask,gainFile,recursePattern, split):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = pyFAI.load(poni)
         self.mask = mask
         self.gainFile = gainFile
         self.recursePattern = recursePattern
+        self.split = split
     def run(self):
         self.running = True
         fileList = []
         while self.running:
             try:
                 fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
-                                                                        self.recursePattern, fileList)
+                                                                        self.recursePattern, fileList, self.split)
             except OSError as e:
                 print(e)
                 print('stopping')
@@ -135,6 +136,21 @@ class Ui_MainWindow(object):
         self.recurseLabel.setText( "recurse path pattern (only searches\ndirectories containing this pattern)") 
         self.recurseLabel.adjustSize()
 
+        self.splitBox = QtWidgets.QSpinBox(self.centralwidget)
+        self.splitBox.setGeometry(QtCore.QRect(140,210, 80, 30))
+        self.splitBox.setObjectName("splitBox")
+        self.splitBox.setValue(0)
+        self.splitBox.setMinimum(0)
+        self.splitBox.setMaximum(100)
+        self.splitBox.adjustSize()
+        
+        self.splitLabel = QtWidgets.QLabel(self.centralwidget)
+        self.splitLabel.setGeometry(QtCore.QRect(220,215, 80, 30))
+        self.splitLabel.setObjectName('splitLabel')
+        self.splitLabel.setText('split files (0 to not use)')
+        self.splitLabel.adjustSize()
+        
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 625, 21))
@@ -204,12 +220,16 @@ class Ui_MainWindow(object):
             self.updateConfig()
             self.updateConfigFile()
 
+    def getValue(self,widget):
+        if isinstance(widget, QtWidgets.QLineEdit):
+            return widget.text()
+        elif isinstance(widget,QtWidgets.QSpinBox):
+            return widget.value()
     def updateConfig(self):
-        self.configDct = {self.directoryBox.objectName() :[ self.directoryBox , self.directoryBox.text()],
-                     self.poniBox.objectName(): [self.poniBox, self.poniBox.text()],
-                     self.maskBox.objectName(): [self.maskBox, self.maskBox.text()],
-                     self.gainMapBox.objectName(): [self.gainMapBox,self.gainMapBox.text()],
-                     self.recursePatternBox.objectName(): [self.recursePatternBox, self.recursePatternBox.text()]}
+        params = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.recursePatternBox, self.splitBox]
+        self.configDct = {}
+        for p in params:
+            self.configDct[p.objectName()] = [p,self.getValue(p)]
         
     def updateConfigFile(self):
         self.updateConfig()
@@ -220,6 +240,12 @@ class Ui_MainWindow(object):
         f.write(string)
         f.close()
 
+    def setValue(self,widget,value):
+        if isinstance(widget,QtWidgets.QLineEdit):
+            widget.setText(value)
+        elif isinstance(widget,QtWidgets.QSpinBox):
+            widget.setValue(int(value))
+
     def readConfigFile(self):
         f=open(self.configFile,'r')
         lines = f.readlines()
@@ -229,7 +255,7 @@ class Ui_MainWindow(object):
             if not line:
                 continue
             linesplit = line.split(';')
-            self.configDct[linesplit[0]][0].setText(linesplit[1])
+            self.setValue(self.configDct[linesplit[0]][0],linesplit[1])
         self.updateConfig()
     
     def run(self):
@@ -240,6 +266,7 @@ class Ui_MainWindow(object):
         poni = self.poniBox.text()
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
+        split = self.splitBox.value()
         stringDct = {poni:'poni file',mask:'mask file', gainFile: 'gain file', direc: 'directory'}
         pars = [direc,poni,mask,gainFile]
         for par in pars:
@@ -253,10 +280,12 @@ class Ui_MainWindow(object):
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
-                self.startWorker(direc,poni,mask,gainFile,dirpattern)
+                self.startWorker(direc,poni,mask,gainFile,dirpattern, split)
                 #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
-                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile)
+                self.runButton.setEnabled(False)
+                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split)
+                self.runButton.setEnabled(True)
             print('finished')
         except IndexError:
             print('no valid files')
@@ -265,10 +294,10 @@ class Ui_MainWindow(object):
             print(e)
             return
         
-    def startWorker(self, direc, poni,mask,gainFile,recursePattern):
+    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split):
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(direc, poni,mask,gainFile,recursePattern)
+        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split)
         self.thread.start()
 
     def stopWorker(self):

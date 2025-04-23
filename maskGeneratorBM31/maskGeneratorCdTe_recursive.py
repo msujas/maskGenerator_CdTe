@@ -4,6 +4,7 @@ import fabio
 import numpy as np
 from glob import glob
 import os
+import math
 from pathlib import Path
 import time
 from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
@@ -22,7 +23,7 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
+def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None):
     if fileList == None:
         fileList = []
     os.chdir(direc)
@@ -31,17 +32,18 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
         poni = pyFAI.load(poni)
     elif not isinstance(poni,pyFAI.integrator.azimuthal.AzimuthalIntegrator):
         print('poni argument must be string or pyFAI azimuthal integrator type')
-
+    
+    splitval = split
     runningFull = False
     for root, dirs, files in os.walk(direc):
         if avdir in root or 'badFrames' in root or folderPattern not in root:
             continue
         os.chdir(root)
         cbfs = glob('*.cbf')
-        cbfs.sort()
+        
         if len(cbfs) == 0:
             continue
-        
+        cbfs.sort()
         runDirec = False
         for cbf in cbfs:
             fullcbf = f'{root}/{cbf}'
@@ -62,27 +64,31 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None):
         if os.path.isfile(badFramesLog):
             os.remove(badFramesLog)
 
+        if not split:
+            splitval = len(cbfs)
 
-        dataset, usedFiles = makeDataSet(cbfs,  badFramesLog, scale = scale, doMonitor = doMonitor)
+        for i in range(math.ceil(len(cbfs)/splitval)):
+            cbfstemp = cbfs[i*split:(i+1)*split]
+            dataset, usedFiles = makeDataSet(cbfstemp,  badFramesLog, scale = scale, doMonitor = doMonitor)
 
-        if np.any(dataset) == False:
-            print(f'no monitor for {root}')
-            continue
-        print('\nmaking masks')
-        masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
-        
-        for n in range(5):
-            try:
-                print('\nmaking and integrating average image')
-                integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
-                break
-            except OSError as e:
-                if n == 4:
-                    raise OSError(e)
-                time.sleep(1)
-        print('\nintegrating individual images')
-        integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
-                            gainFile=gainFile)
+            if np.any(dataset) == False:
+                print(f'no monitor for {root}')
+                continue
+            print('\nmaking masks')
+            masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
+            
+            for n in range(5):
+                try:
+                    print('\nmaking and integrating average image')
+                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
+                    break
+                except OSError as e:
+                    if n == 4:
+                        raise OSError(e)
+                    time.sleep(1)
+            print('\nintegrating individual images')
+            integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
+                                gainFile=gainFile)
     return fileList, runningFull
         
 def runLoop(direc,dest,poni,mask,gainFile,folderPattern):

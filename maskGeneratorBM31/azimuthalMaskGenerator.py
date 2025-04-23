@@ -129,6 +129,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         allFiles = []
     allFilesR = [f for f in allFiles]
     av = 0
+
     for file in cbfs:
         fullfile = f'{datadir}/{file}'
         if fullfile not in allFilesR:
@@ -150,25 +151,6 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
             maskim = fabio.edfimage.EdfImage(mask)
             maskim.save(f'{maskdir}/{file}'.replace('.cbf','.edf'))
         normArray = (dataarray/monitorCounts) * scale
-        '''
-        if averaging > 1:
-
-            if av == 0:
-                avArray = np.empty(shape = (*normArray.shape, averaging))
-            avArray[:,:,av] = np.where(mask == 1, -1, normArray)
-            if av == averaging-1 or file == cbfs[-1]:
-                avArray = np.where(avArray < 0, np.nan, avArray)
-                avArray = np.nanmean(avArray, axis =2)
-                avArray = np.where(np.isnan(avArray), -1, avArray)
-                maskav = np.where(avArray < 0, 1, 0)
-                outfileav = f'{outdirav}/{xyefile}'
-                poni.integrate1d(avArray,mask = maskav, filename = outfileav, polarization_factor = None,
-                unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
-                error_model = 'poisson', safe = False) #not applying polarisation and solid angle as already applied earlier
-                av = 0
-                if save2d:
-                    int2d(outfileav, avArray, poni, maskav)
-        '''
         
         x,y,e = poni.integrate1d(normArray,mask = mask, filename = outfile, polarization_factor = None,
                         unit = '2th_deg', correctSolidAngle = False, method = 'bbox', npt = 5000, 
