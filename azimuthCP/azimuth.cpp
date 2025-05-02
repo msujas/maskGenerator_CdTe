@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+//#include <numpy/arrayobject.h>
 //#include <pybind11/pybind11.h>
 using std::vector;
 using std::logic_error;
@@ -162,7 +163,8 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
         std::cout << "data shape: " << dataArray.size() << ',' << dataArray[0].size() << '\n';
         std::cout << "mask shape: " << basemask.size() << ',' << basemask[0].size() << '\n';
         std::cout << "bin shape: " << binArray.size() << ',' << binArray[0].size() << '\n';
-        throw std::runtime_error("array mismatch");
+        PyErr_BadArgument();
+        //throw std::runtime_error("array mismatch");
     }
     int y;
     int x;
@@ -178,13 +180,15 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
             }
         }
     }
+    float mediandata;
+    double stdevData;
     for (int i = 0; i < nbins; i++) {
         vector<float> data = binnedData[i];
         if (data.size() == 0) {
             continue;
         }
-        float mediandata = median(data);
-        double stdevData = stdev(data);
+        mediandata = median(data);
+        stdevData = stdev(data);
         for (int j = 0; j < indexes[i].size(); j++) {
             y = indexes[i][j][0];
             x = indexes[i][j][1];
@@ -197,18 +201,20 @@ vector<vector<int>> generateMask(vector<vector<float>> dataArray, vector<vector<
 }
 
 PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
+    
     if (!PyTuple_Check(argTup)) {
         string message = "Passed PyObject pointer was not a tuple!";
         std::cout << message << '\n';
         throw logic_error(message);
     }
+    
     PyObject* dataPy = PyTuple_GetItem(argTup, 0);
     PyObject* baseMaskPy = PyTuple_GetItem(argTup, 1);
     PyObject* binArrayPy = PyTuple_GetItem(argTup, 2);
     PyObject* nbinsPy = PyTuple_GetItem(argTup, 3);
     PyObject* stdevsPy = PyTuple_GetItem(argTup, 4);
     PyObject* thresholdPy = PyTuple_GetItem(argTup, 5);
-
+    
 
     vector<vector<float>> dataArray = listToVector_Float2d(dataPy);
     vector<vector<int>> baseMask = listToVector_int2d(baseMaskPy);
@@ -216,6 +222,7 @@ PyObject* makeMaskCP(PyObject*, PyObject* argTup) {
     int nbins = PyLong_AsLong(nbinsPy);
     float stdevs = PyFloat_AsDouble(stdevsPy); 
     int threshold = PyLong_AsLong(thresholdPy);
+    
 
     vector<vector<int>> newmask = generateMask(dataArray, baseMask, binArray, nbins, stdevs,
         threshold);

@@ -30,8 +30,6 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, spli
     mask = fabio.open(mask).data
     if isinstance(poni,str):
         poni = pyFAI.load(poni)
-    elif not isinstance(poni,pyFAI.integrator.azimuthal.AzimuthalIntegrator):
-        print('poni argument must be string or pyFAI azimuthal integrator type')
     
     splitval = split
     runningFull = False
@@ -54,10 +52,6 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, spli
         if not runDirec:
             continue
         print(root)
-        #if doMonitor: #for using monitor log files instead of file header
-            #monitorFile = glob('*.dat')[0]
-            #monitorList = np.loadtxt(monitorFile,usecols = 2, skiprows = 1)
-
         subdir = f'xye_{stdevs}stdev/'
         outfolder = root.replace(direc,dest)
         badFramesLog = f'{outfolder}/badFrames.txt'
