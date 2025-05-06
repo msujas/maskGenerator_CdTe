@@ -62,7 +62,7 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, spli
             splitval = len(cbfs)
 
         for i in range(math.ceil(len(cbfs)/splitval)):
-            cbfstemp = cbfs[i*split:(i+1)*split]
+            cbfstemp = cbfs[i*splitval:(i+1)*splitval]
             dataset, usedFiles = makeDataSet(cbfstemp,  badFramesLog, scale = scale, doMonitor = doMonitor)
 
             if np.any(dataset) == False:

@@ -38,7 +38,6 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
     usedFiles = []
     monitors = []
     i1 = fabio.open(files[0]).data
-    
     count = 0
     for file in files:
         header = CbfHeader(file)
@@ -145,10 +144,6 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
                         correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
         clearPyFAI_header(outfileGC)
         bubbleHeader(outfileGC_2d,*result[:3])
-    
-    
-    
-
 
 def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, avdir = 'average', unit = '2th_deg', npt = 5000, polF = 0.99):
     '''

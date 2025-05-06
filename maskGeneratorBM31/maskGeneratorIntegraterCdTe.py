@@ -45,7 +45,6 @@ def run(direc,dest,poni,mask,gainFile, split = None):
 
         subdir = f'xye_{nstdevs}stdevs/'
 
-
         if not os.path.exists(f'{dest}/average/xye/'):
             os.makedirs(f'{dest}/average/xye/')
 
