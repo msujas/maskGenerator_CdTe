@@ -76,8 +76,8 @@ def generateDetArrays(cbffile, ponifile, nbins, polarisation):
 
 def int2d(outfile1d, normArray, poni, mask):
     outfile_2d = outfile1d.replace('.xye','.edf')
-    result = poni.integrate2d(data = normArray, filename = None,mask = mask,polarization_factor = polarisation, unit = '2th_deg',
-                correctSolidAngle = True, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
+    result = poni.integrate2d(data = normArray, filename = None,mask = mask,polarization_factor = None, unit = '2th_deg',
+                correctSolidAngle = False, method = 'bbox',npt_rad = 5000,npt_azim = 360, error_model = 'poisson', safe = False)
     bubbleHeader(outfile_2d,*result[:3])
     return result
 
@@ -96,7 +96,7 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
     dataarray = makeArray(file,polarray,saArray, gainMap)
     mask = generateMask(dataarray, basemask, binarray, nbins, stdevs)
     poni = pyFAI.load(ponifile)
-    poni.integrate1d(dataarray, mask = mask, filename=outfile, polarization_factor=0.99, unit = '2th_deg', correctSolidAngle=True,
+    poni.integrate1d(dataarray, mask = mask, filename=outfile, polarization_factor=None, unit = '2th_deg', correctSolidAngle=False,
                      method = 'bbox', npt = 5000, error_model='poisson', safe = False)
     clearPyFAI_header(outfile)
     if save2d:
