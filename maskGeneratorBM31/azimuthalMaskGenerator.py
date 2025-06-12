@@ -87,7 +87,7 @@ def integrateIndividualAzMask(file, maskfile, ponifile, gainFile=None, stdevs = 
     os.makedirs(fulloutdir,exist_ok=True)
     outbasefile = os.path.basename(file).replace('.cbf','.xye')
     outfile = f'{fulloutdir}/{outbasefile}'
-    array2th, polarray, saArray, binarray = generateDetArrays(file, ponifile, nbins)
+    array2th, polarray, saArray, binarray = generateDetArrays(file, ponifile, nbins, polarisation=0.99)
     if not gainFile == None:
         gainMap = fabio.open(gainFile).data
     else:
@@ -143,7 +143,7 @@ def run(datadir, ponifile,  stdevs, maskfile, scale, threshold = 100, polarisati
         header = CbfHeader(file)
         monitorCounts = 1
         if 'Flux' in header:
-            monitorCounts = header['Flux']
+            monitorCounts = int(header['Flux'])
         
         mask = generateMask(dataarray, basemask,binarray,nbins, stdevs, threshold, cpp)
         

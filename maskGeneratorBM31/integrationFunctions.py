@@ -1,4 +1,5 @@
 import fabio
+import fabio.edfimage
 import numpy as np
 import matplotlib.pyplot as plt
 import os, re
@@ -13,9 +14,8 @@ def gainCorrectionFiles(cbfFile, gainFile):
     array = CbfImage(cbfFile).array
     gainArray = fabio.open(gainFile).data
     newarray = gainCorrection(array,gainArray)
-    im = CbfImage()
-    im.array = newarray
-    im.save(cbfFile.replace('.cbf','_GC.cbf'))
+    im = fabio.edfimage.EdfImage(newarray)
+    im.save(cbfFile.replace('.cbf','_GC.edf'))
 
 def clearPyFAI_header(file):
     x,y,e = np.loadtxt(file,unpack = True, comments = '#')
@@ -84,7 +84,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
-def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
+def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='average', unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
     '''
     arguments: dataset, files, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
@@ -105,8 +105,8 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
         basefilename = os.path.basename(files[-1])
         shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
 
-    if not os.path.exists(f'{dest}/average/xye/'):
-        os.makedirs(f'{dest}/average/xye/')
+    if not os.path.exists(f'{dest}/{outdir}/xye/'):
+        os.makedirs(f'{dest}/{outdir}/xye/')
 
     dataset2 = np.empty(shape = dataset.shape)
     for n in maskdct:
@@ -115,16 +115,16 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, unit = '2th_
     avim = np.where(np.isnan(avim), -2, avim)
     im = CbfImage()
     im.array = avim
-    im.save(f'{dest}/average/{shortbasename}_average.cbf')
+    im.save(f'{dest}/{outdir}/{shortbasename}_average.cbf')
     
     if gainFile != None:
         gainArray = fabio.open(gainFile).data
         avimGain = im.array = gainCorrection(avim,gainArray)
-        im.save(f'{dest}/average/{shortbasename}_average_gainCorrected.cbf')
+        im.save(f'{dest}/{outdir}/{shortbasename}_average_gainCorrected.cbf')
         mask_avGain = np.where(avimGain < 0, 1, 0)
 
 
-    outfile = f'{dest}/average/xye/{shortbasename}_average.xye'
+    outfile = f'{dest}/{outdir}/xye/{shortbasename}_average.xye'
     outfile_2d = outfile.replace('.xye','.edf')
     mask_av = np.where(avim < 0, 1, 0)
     

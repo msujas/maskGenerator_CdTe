@@ -17,7 +17,7 @@ import os,time
 import pyFAI
 
 class Worker(QtCore.QThread):
-    def __init__(self,direc,poni, mask,gainFile,recursePattern, split):
+    def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average'):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = pyFAI.load(poni)
@@ -25,13 +25,14 @@ class Worker(QtCore.QThread):
         self.gainFile = gainFile
         self.recursePattern = recursePattern
         self.split = split
+        self.outdir = outdir
     def run(self):
         self.running = True
         fileList = []
         while self.running:
             try:
                 fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
-                                                                        self.recursePattern, fileList, self.split)
+                                                                        self.recursePattern, fileList, self.split, outdir = self.outdir)
             except OSError as e:
                 print(e)
                 print('stopping')
@@ -135,7 +136,18 @@ class Ui_MainWindow(object):
         self.recurseLabel.setObjectName("recurseLabel")
         self.recurseLabel.setText( "recurse path pattern (only searches\ndirectories containing this pattern)") 
         self.recurseLabel.adjustSize()
+        '''
+        self.outdirBox = QtWidgets.QLineEdit(self.centralwidget)
+        self.outdirBox.setGeometry(QtCore.QRect(110, 240, 120, 20))
+        self.outdirBox.setObjectName("outdirBox") 
+        self.outdirBox.setText('average')
 
+        self.outdirLabel = QtWidgets.QLabel(self.centralwidget)
+        self.outdirLabel.setGeometry(QtCore.QRect(240, 240, 71, 16))
+        self.outdirLabel.setObjectName("outdirLabel")
+        self.outdirLabel.setText("average output\ndirectory") 
+        self.outdirLabel.adjustSize()
+        '''
         self.splitBox = QtWidgets.QSpinBox(self.centralwidget)
         self.splitBox.setGeometry(QtCore.QRect(140,210, 80, 30))
         self.splitBox.setObjectName("splitBox")
@@ -267,6 +279,9 @@ class Ui_MainWindow(object):
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
         split = self.splitBox.value()
+        outdir = 'average'#self.outdirBox.text()
+        if not outdir:
+            outdir = 'average'
         stringDct = {poni:'poni file',mask:'mask file', gainFile: 'gain file', direc: 'directory'}
         pars = [direc,poni,mask,gainFile]
         for par in pars:
@@ -280,12 +295,11 @@ class Ui_MainWindow(object):
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
-                self.startWorker(direc,poni,mask,gainFile,dirpattern, split)
+                self.startWorker(direc,poni,mask,gainFile,dirpattern, split, outdir)
                 #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
-                self.runButton.setEnabled(False)
-                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split)
-                self.runButton.setEnabled(True)
+                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir)
+                
             print('finished')
         except IndexError:
             print('no valid files')
@@ -294,10 +308,10 @@ class Ui_MainWindow(object):
             print(e)
             return
         
-    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split):
+    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split, outdir):
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split)
+        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir)
         self.thread.start()
 
     def stopWorker(self):

@@ -23,7 +23,7 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None):
+def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average'):
     if fileList == None:
         fileList = []
     os.chdir(direc)
@@ -74,7 +74,7 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, spli
             for n in range(5):
                 try:
                     print('\nmaking and integrating average image')
-                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks)
+                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir)
                     break
                 except OSError as e:
                     if n == 4:
