@@ -29,6 +29,8 @@ def run(direc,dest,poni,mask,gainFile, split = None, outdirav = 'average'):
         os.remove(badFramesLog)
 
     files = glob('*.cbf')
+    if not files:
+        return
     files.sort()
     if not split:
         splitVal = len(files)

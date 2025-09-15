@@ -69,6 +69,7 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
 
 def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
     maskdct = {}
+    #maskarray = np.zeros(shape=dataset.shape)
     median = np.median(dataset,axis=2)
     stdev = np.std(dataset,axis = 2)
     for c,file in enumerate(files):
@@ -76,6 +77,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
         array = dataset[:,:,c]
         
         maskdct[c] = np.where(array > median+nstdevs*stdev,1,baseMask)
+        #maskarray[:,:,c] = np.where(array > median+nstdevs*stdev,1,baseMask)
         if plot:
             vmax = np.percentile(np.where(np.isnan(array),0,array),99.5)
             fig,ax = plt.subplots(1,2,dpi = 150)

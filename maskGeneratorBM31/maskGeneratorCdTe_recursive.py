@@ -23,6 +23,70 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
+def runSplit(root, subdir, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False):
+    if stop:
+        return
+    for i in range(math.ceil(len(cbfs)/splitval)):
+        cbfstemp = cbfs[i*splitval:(i+1)*splitval]
+        dataset, usedFiles = makeDataSet(cbfstemp,  badFramesLog, scale = scale, doMonitor = doMonitor)
+
+        if np.any(dataset) == False:
+            print(f'no monitor for {root}')
+            continue
+        print('\nmaking masks')
+        masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
+        
+        for n in range(5):
+            try:
+                print('\nmaking and integrating average image')
+                integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir)
+                break
+            except OSError as e:
+                if n == 4:
+                    raise OSError(e)
+                time.sleep(1)
+        print('\nintegrating individual images')
+        integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
+                            gainFile=gainFile)
+
+def rundirSetup(root, basedir,dest, folderPattern = '', fileList = None, split = None):
+    if not fileList:
+        fileList = []
+    if avdir in root or 'badFrames' in root or folderPattern not in root:
+        return
+    os.chdir(root)
+    cbfs = glob('*.cbf')
+    
+    if len(cbfs) == 0:
+        return
+    cbfs.sort()
+    runDirec = False
+    for cbf in cbfs:
+        fullcbf = f'{root}/{cbf}'
+        if not fullcbf in fileList:
+            fileList.append(fullcbf)
+            runDirec = True
+            runningFull = True
+    if not runDirec:
+        return
+    print(root)
+    subdir = f'xye_{stdevs}stdev/'
+    outfolder = root.replace(basedir,dest)
+    badFramesLog = f'{outfolder}/badFrames.txt'
+    if os.path.isfile(badFramesLog):
+        os.remove(badFramesLog)
+    splitval = split
+    if not split:
+        splitval = len(cbfs)
+    return subdir,cbfs, outfolder, splitval, badFramesLog, runningFull
+
+def rundir(root, basedir,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average', stop = False):
+    subdir,cbfs, outfolder, splitval, badFramesLog,runningFull = rundirSetup(root, basedir,dest, 
+                                                                            folderPattern = folderPattern, fileList = None, 
+                                                                            split = None)
+    runSplit(root, subdir, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop)
+    return fileList, runningFull
+
 def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average'):
     if fileList == None:
         fileList = []
@@ -31,58 +95,9 @@ def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, spli
     if isinstance(poni,str):
         poni = pyFAI.load(poni)
     
-    splitval = split
     runningFull = False
-    for root, dirs, files in os.walk(direc):
-        if avdir in root or 'badFrames' in root or folderPattern not in root:
-            continue
-        os.chdir(root)
-        cbfs = glob('*.cbf')
-        
-        if len(cbfs) == 0:
-            continue
-        cbfs.sort()
-        runDirec = False
-        for cbf in cbfs:
-            fullcbf = f'{root}/{cbf}'
-            if not fullcbf in fileList:
-                fileList.append(fullcbf)
-                runDirec = True
-                runningFull = True
-        if not runDirec:
-            continue
-        print(root)
-        subdir = f'xye_{stdevs}stdev/'
-        outfolder = root.replace(direc,dest)
-        badFramesLog = f'{outfolder}/badFrames.txt'
-        if os.path.isfile(badFramesLog):
-            os.remove(badFramesLog)
-
-        if not split:
-            splitval = len(cbfs)
-
-        for i in range(math.ceil(len(cbfs)/splitval)):
-            cbfstemp = cbfs[i*splitval:(i+1)*splitval]
-            dataset, usedFiles = makeDataSet(cbfstemp,  badFramesLog, scale = scale, doMonitor = doMonitor)
-
-            if np.any(dataset) == False:
-                print(f'no monitor for {root}')
-                continue
-            print('\nmaking masks')
-            masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
-            
-            for n in range(5):
-                try:
-                    print('\nmaking and integrating average image')
-                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir)
-                    break
-                except OSError as e:
-                    if n == 4:
-                        raise OSError(e)
-                    time.sleep(1)
-            print('\nintegrating individual images')
-            integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
-                                gainFile=gainFile)
+    for root, _dirs, _files in os.walk(direc):
+        fileList, runningFull = rundir(root, direc,dest,poni, mask,gainFile, folderPattern, fileList, split, outdir)
     return fileList, runningFull
         
 def runLoop(direc,dest,poni,mask,gainFile,folderPattern):

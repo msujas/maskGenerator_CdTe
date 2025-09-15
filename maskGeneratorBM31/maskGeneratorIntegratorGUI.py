@@ -15,13 +15,15 @@ else:
 from PyQt6 import QtCore, QtGui, QtWidgets
 import os,time
 import pyFAI
+import fabio
+from glob import glob
 
 class Worker(QtCore.QThread):
     def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average'):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = pyFAI.load(poni)
-        self.mask = mask
+        self.mask = fabio.open(mask).data
         self.gainFile = gainFile
         self.recursePattern = recursePattern
         self.split = split
@@ -30,19 +32,27 @@ class Worker(QtCore.QThread):
         self.running = True
         fileList = []
         while self.running:
-            try:
-                fileList, runningFull = maskGeneratorCdTe_recursive.run(self.direc,self.direc,self.poni,self.mask, self.gainFile, 
-                                                                        self.recursePattern, fileList, self.split, outdir = self.outdir)
-            except OSError as e:
-                print(e)
-                print('stopping')
-                self.stop()
-                return
+            for root, dirs, files in os.walk(self.direc):
+                if not self.running:
+                    #print('stopping')
+                    return
+                if len(glob(f'{root}/*.cbf')) == 0:
+                    continue
+                try:
+                    fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root,self.direc,self.direc,self.poni,self.mask, 
+                                                                               self.gainFile, self.recursePattern, fileList, self.split, 
+                                                                               outdir = self.outdir)
+                except OSError as e:
+                    print(e)
+                    print('stopping')
+                    self.stop()
+                    return
             time.sleep(1)
             if runningFull:
                 print('looking for new files')
     def stop(self):
-        self.terminate()
+        self.running = False
+        #self.terminate()
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
