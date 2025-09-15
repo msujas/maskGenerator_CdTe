@@ -31,17 +31,21 @@ class Worker(QtCore.QThread):
     def run(self):
         self.running = True
         fileList = []
+        
         while self.running:
+            runningFull = False
             for root, dirs, files in os.walk(self.direc):
                 if not self.running:
                     #print('stopping')
                     return
                 if len(glob(f'{root}/*.cbf')) == 0:
                     continue
+                if not self.recursePattern in root or self.outdir in root:
+                    continue
                 try:
-                    fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root,self.direc,self.direc,self.poni,self.mask, 
-                                                                               self.gainFile, self.recursePattern, fileList, self.split, 
-                                                                               outdir = self.outdir)
+                    fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root=root,basedir = self.direc,dest=self.direc,poni=self.poni,
+                                                                               mask = self.mask,gainFile=self.gainFile, runningFull=runningFull,
+                                                                                fileList=fileList,split= self.split, outdir = self.outdir)
                 except OSError as e:
                     print(e)
                     print('stopping')

@@ -23,7 +23,8 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-def runSplit(root, subdir, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False):
+def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False):
+    subdir = f'xye_{stdevs}stdev/'
     if stop:
         return
     for i in range(math.ceil(len(cbfs)/splitval)):
@@ -49,28 +50,29 @@ def runSplit(root, subdir, cbfs, poni, mask, gainFile, outfolder, splitval, badF
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
 
-def rundirSetup(root, basedir,dest, folderPattern = '', fileList = None, split = None):
+def rundirSetup(root, basedir,dest, runningFull:bool,  fileList = None, split = None):
     if not fileList:
         fileList = []
-    if avdir in root or 'badFrames' in root or folderPattern not in root:
-        return
+    #if avdir in root or 'badFrames' in root or folderPattern not in root:
+    #    return
     os.chdir(root)
     cbfs = glob('*.cbf')
     
-    if len(cbfs) == 0:
-        return
+    #if len(cbfs) == 0:
+    #    return
     cbfs.sort()
     runDirec = False
+
     for cbf in cbfs:
         fullcbf = f'{root}/{cbf}'
         if not fullcbf in fileList:
             fileList.append(fullcbf)
             runDirec = True
             runningFull = True
-    if not runDirec:
-        return
-    print(root)
-    subdir = f'xye_{stdevs}stdev/'
+    #if not runDirec:
+    #    return
+    
+    #subdir = f'xye_{stdevs}stdev/'
     outfolder = root.replace(basedir,dest)
     badFramesLog = f'{outfolder}/badFrames.txt'
     if os.path.isfile(badFramesLog):
@@ -78,32 +80,39 @@ def rundirSetup(root, basedir,dest, folderPattern = '', fileList = None, split =
     splitval = split
     if not split:
         splitval = len(cbfs)
-    return subdir,cbfs, outfolder, splitval, badFramesLog, runningFull
+    return cbfs, outfolder, splitval, badFramesLog, runningFull, fileList
 
-def rundir(root, basedir,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average', stop = False):
-    subdir,cbfs, outfolder, splitval, badFramesLog,runningFull = rundirSetup(root, basedir,dest, 
-                                                                            folderPattern = folderPattern, fileList = None, 
-                                                                            split = None)
-    runSplit(root, subdir, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop)
+def rundir(root, basedir,dest,poni,mask,gainFile, runningFull:bool,  fileList = None, split = None, 
+           outdir = 'average', stop = False):
+
+    cbfs, outfolder, splitval, badFramesLog,runningFull, fileList = rundirSetup(root=root, basedir=basedir,dest=dest, runningFull=runningFull,
+                                                                             fileList = fileList, split = split)
+    
+    if runningFull:
+        runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop)
     return fileList, runningFull
 
 def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average'):
-    if fileList == None:
-        fileList = []
-    os.chdir(direc)
+    #if fileList == None:
+    #    fileList = []
+    #os.chdir(direc)
     mask = fabio.open(mask).data
     if isinstance(poni,str):
         poni = pyFAI.load(poni)
     
     runningFull = False
     for root, _dirs, _files in os.walk(direc):
-        fileList, runningFull = rundir(root, direc,dest,poni, mask,gainFile, folderPattern, fileList, split, outdir)
+        if outdir in root or 'badFrames' in root or folderPattern not in root:
+            continue
+        fileList, runningFull = rundir(root=root, direc=direc,dest=dest,poni=poni, mask=mask,gainFile=gainFile, 
+                                       runningFull=runningFull, fileList=fileList, split=split, outdir=outdir)
     return fileList, runningFull
         
 def runLoop(direc,dest,poni,mask,gainFile,folderPattern):
     fileList = []
     while True:
-        fileList, runningFull = run(direc,dest,poni,mask, gainFile, folderPattern, fileList)
+        fileList, runningFull = run(direc=direc,dest=dest,poni=poni,mask=mask, gainFile=gainFile, folderPattern=folderPattern, 
+                                    fileList=fileList)
         time.sleep(1)
         if runningFull:
             print('looking for new files')
