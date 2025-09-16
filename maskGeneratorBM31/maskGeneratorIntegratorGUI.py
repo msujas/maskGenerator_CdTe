@@ -305,7 +305,6 @@ class Ui_MainWindow(object):
             elif not os.path.exists(par):
                 print(f'{stringDct[par]} not found')
                 return
-
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
@@ -313,8 +312,8 @@ class Ui_MainWindow(object):
                 #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
                 maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir)
+                print('finished')
                 
-            print('finished')
         except IndexError:
             print('no valid files')
             return

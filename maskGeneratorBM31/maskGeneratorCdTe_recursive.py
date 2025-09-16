@@ -50,7 +50,7 @@ def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badF
         integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
 
-def rundirSetup(root, basedir,dest, runningFull:bool,  fileList = None, split = None):
+def rundirSetup(root, basedir,dest,   fileList = None, split = None):
     if not fileList:
         fileList = []
     #if avdir in root or 'badFrames' in root or folderPattern not in root:
@@ -68,7 +68,7 @@ def rundirSetup(root, basedir,dest, runningFull:bool,  fileList = None, split = 
         if not fullcbf in fileList:
             fileList.append(fullcbf)
             runDirec = True
-            runningFull = True
+
     #if not runDirec:
     #    return
     
@@ -80,16 +80,17 @@ def rundirSetup(root, basedir,dest, runningFull:bool,  fileList = None, split = 
     splitval = split
     if not split:
         splitval = len(cbfs)
-    return cbfs, outfolder, splitval, badFramesLog, runningFull, fileList
+    return cbfs, outfolder, splitval, badFramesLog,  fileList, runDirec
 
 def rundir(root, basedir,dest,poni,mask,gainFile, runningFull:bool,  fileList = None, split = None, 
            outdir = 'average', stop = False):
 
-    cbfs, outfolder, splitval, badFramesLog,runningFull, fileList = rundirSetup(root=root, basedir=basedir,dest=dest, runningFull=runningFull,
+    cbfs, outfolder, splitval, badFramesLog, fileList, runDirec = rundirSetup(root=root, basedir=basedir,dest=dest, 
                                                                              fileList = fileList, split = split)
     
-    if runningFull:
+    if runDirec:
         runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop)
+        runningFull = True
     return fileList, runningFull
 
 def run(direc,dest,poni,mask,gainFile, folderPattern = '', fileList = None, split = None, outdir = 'average'):
