@@ -1,3 +1,5 @@
+Most of functionality now integrated into Bubble (v. 4.3.0, cosmic masking from image stack and gain correction), so you can use that instead. https://soft.snbl.eu/bubble/bubble.html
+
 Scripts and programs for cosmic masking, integration and gain map correction for BM31 total scattering data on the Pilatus 2M CdTe detector. Requires a stack of images (~10 or more) to determine where the cosmics are by a statistical approach.
 
 Run 'pip install -e .' (-e for editable, dropping will copy files to site-packages, rather than reading directly) in the folder to install. This creates a GUI program called 'imagin' (Image MAsk Generator INtegrator). Run from the command prompt - choose directory, poni  file, mask file and gain map file, then run. There is another program called 'azimagin' which does the cosmic masking from a single image looking at statistics on bins of pixels. This will probably soon be implemented into Bubble, so will no longer be necessary.
