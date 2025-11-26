@@ -19,7 +19,7 @@ import fabio
 from glob import glob
 
 class Worker(QtCore.QThread):
-    def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average'):
+    def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average', individual = True):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = pyFAI.load(poni)
@@ -28,6 +28,7 @@ class Worker(QtCore.QThread):
         self.recursePattern = recursePattern
         self.split = split
         self.outdir = outdir
+        self.individual = individual
     def run(self):
         self.running = True
         fileList = []
@@ -45,7 +46,7 @@ class Worker(QtCore.QThread):
                 try:
                     fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root=root,basedir = self.direc,dest=self.direc,poni=self.poni,
                                                                                mask = self.mask,gainFile=self.gainFile, runningFull=runningFull,
-                                                                                fileList=fileList,split= self.split, outdir = self.outdir)
+                                                                                fileList=fileList,split= self.split, outdir = self.outdir, individual=self.individual)
                 except OSError as e:
                     print(e)
                     print('stopping')
@@ -68,88 +69,112 @@ class Ui_MainWindow(object):
 
         self.configFile = f'{os.path.dirname(os.path.realpath(__file__))}/guiConfig.log'
 
+        self.grid = QtWidgets.QGridLayout()
+
         self.directoryBox = QtWidgets.QLineEdit(self.centralwidget)
         self.directoryBox.setGeometry(QtCore.QRect(10, 20, 431, 20))
         self.directoryBox.setObjectName("directoryBox")
+        self.grid.addWidget(self.directoryBox, 0,0,1,3)
+
 
         self.dirButton = QtWidgets.QPushButton(self.centralwidget)
         self.dirButton.setGeometry(QtCore.QRect(450, 20, 21, 21))
         self.dirButton.setObjectName("dirButton")
         self.dirButton.setText("...")
+        self.dirButton.setMaximumWidth(30)
+        self.grid.addWidget(self.dirButton, 0, 3)
 
         self.poniBox = QtWidgets.QLineEdit(self.centralwidget)
         self.poniBox.setGeometry(QtCore.QRect(10, 60, 431, 20))
         self.poniBox.setObjectName("poniBox")
+        self.grid.addWidget(self.poniBox, 1,0,1,3)
 
         self.maskBox = QtWidgets.QLineEdit(self.centralwidget)
         self.maskBox.setGeometry(QtCore.QRect(10, 100, 431, 20))
         self.maskBox.setObjectName("maskBox")
+        self.grid.addWidget(self.maskBox, 2,0,1,3)
 
         self.gainMapBox = QtWidgets.QLineEdit(self.centralwidget)
         self.gainMapBox.setGeometry(QtCore.QRect(10, 140, 431, 20))
         self.gainMapBox.setObjectName("gainMapBox")
+        self.grid.addWidget(self.gainMapBox, 3,0,1,3)
 
         self.runButton = QtWidgets.QPushButton(self.centralwidget)
         self.runButton.setGeometry(QtCore.QRect(340, 230, 75, 23))
         self.runButton.setObjectName("runButton")
         self.runButton.setText("Run")
+        self.grid.addWidget(self.runButton, 6,1)
 
         self.stopButton = QtWidgets.QPushButton(self.centralwidget)
         self.stopButton.setGeometry(QtCore.QRect(420, 230, 75, 23))
         self.stopButton.setObjectName("stopButton")
         self.stopButton.setText("Stop")
         self.stopButton.setEnabled(False)
+        self.grid.addWidget(self.stopButton, 6,2)
 
         self.maskButton = QtWidgets.QPushButton(self.centralwidget)
-        self.maskButton.setGeometry(QtCore.QRect(450, 100, 21, 21))
+        #self.maskButton.setGeometry(QtCore.QRect(450, 100, 21, 21))
         self.maskButton.setObjectName("maskButton")
         self.maskButton.setText("...")
+        self.maskButton.setMaximumWidth(30)
+        self.grid.addWidget(self.maskButton, 2,3)
 
         self.poniButton = QtWidgets.QPushButton(self.centralwidget)
         self.poniButton.setGeometry(QtCore.QRect(450, 60, 21, 21))
         self.poniButton.setObjectName("poniButton")
         self.poniButton.setText("...")
+        self.poniButton.setMaximumWidth(30)
+        self.grid.addWidget(self.poniButton, 1,3)
         
         self.gainMapButton = QtWidgets.QPushButton(self.centralwidget)
         self.gainMapButton.setGeometry(QtCore.QRect(450, 140, 21, 21))
         self.gainMapButton.setObjectName("gainMapButton")
         self.gainMapButton.setText("...")
+        self.gainMapButton.setMaximumWidth(30)
+        self.grid.addWidget(self.gainMapButton, 3,3)
 
         self.dirLabel = QtWidgets.QLabel(self.centralwidget)
         self.dirLabel.setGeometry(QtCore.QRect(480, 20, 47, 16))
         self.dirLabel.setObjectName("dirLabel")
         self.dirLabel.setText( "directory")
+        self.grid.addWidget(self.dirLabel, 0,4)
 
         self.poniLabel = QtWidgets.QLabel(self.centralwidget)
         self.poniLabel.setGeometry(QtCore.QRect(480, 60, 47, 16))
         self.poniLabel.setObjectName("poniLabel")
         self.poniLabel.setText( "poni file")
+        self.grid.addWidget(self.poniLabel, 1,4)
 
         self.maskLabel = QtWidgets.QLabel(self.centralwidget)
         self.maskLabel.setGeometry(QtCore.QRect(480, 100, 47, 13))
         self.maskLabel.setObjectName("maskLabel")
         self.maskLabel.setText( "mask file")
+        self.grid.addWidget(self.maskLabel, 2,4)
 
         self.gainLabel = QtWidgets.QLabel(self.centralwidget)
         self.gainLabel.setGeometry(QtCore.QRect(480, 140, 71, 16))
         self.gainLabel.setObjectName("gainLabel")
         self.gainLabel.setText( "gain map file")   
+        self.grid.addWidget(self.gainLabel, 3,4)
 
         self.recurseBox = QtWidgets.QCheckBox(self.centralwidget)
         self.recurseBox.setGeometry(QtCore.QRect(20, 180, 20, 20))
         self.recurseBox.setObjectName("recurseBox")
         self.recurseBox.setText("run recursively\nin loop")
         self.recurseBox.adjustSize()
+        self.grid.addWidget(self.recurseBox, 4,0)
 
         self.recursePatternBox = QtWidgets.QLineEdit(self.centralwidget)
         self.recursePatternBox.setGeometry(QtCore.QRect(140, 180, 120, 20))
-        self.recursePatternBox.setObjectName("recursePatternBox") 
+        self.recursePatternBox.setObjectName("recursePatternBox")
+        self.grid.addWidget(self.recursePatternBox, 4,1) 
 
         self.recurseLabel = QtWidgets.QLabel(self.centralwidget)
         self.recurseLabel.setGeometry(QtCore.QRect(280, 170, 71, 16))
         self.recurseLabel.setObjectName("recurseLabel")
         self.recurseLabel.setText( "recurse path pattern (only searches\ndirectories containing this pattern)") 
         self.recurseLabel.adjustSize()
+        self.grid.addWidget(self.recurseLabel, 4,2) 
         '''
         self.outdirBox = QtWidgets.QLineEdit(self.centralwidget)
         self.outdirBox.setGeometry(QtCore.QRect(110, 240, 120, 20))
@@ -169,14 +194,22 @@ class Ui_MainWindow(object):
         self.splitBox.setMinimum(0)
         self.splitBox.setMaximum(100)
         self.splitBox.adjustSize()
+        self.grid.addWidget(self.splitBox, 5,1) 
         
         self.splitLabel = QtWidgets.QLabel(self.centralwidget)
         self.splitLabel.setGeometry(QtCore.QRect(220,215, 80, 30))
         self.splitLabel.setObjectName('splitLabel')
         self.splitLabel.setText('split files (0 to not use)')
         self.splitLabel.adjustSize()
-        
+        self.grid.addWidget(self.splitLabel, 5,2) 
 
+        self.individualBox = QtWidgets.QCheckBox()
+        self.individualBox.setObjectName('individualBox')
+        self.individualBox.setChecked(True)
+        self.individualBox.setText('integrate individual files')
+        self.grid.addWidget(self.individualBox, 5,0)
+        
+        self.centralwidget.setLayout(self.grid)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 625, 21))
@@ -251,8 +284,11 @@ class Ui_MainWindow(object):
             return widget.text()
         elif isinstance(widget,QtWidgets.QSpinBox):
             return widget.value()
+        elif isinstance(widget, QtWidgets.QCheckBox):
+            return widget.isChecked()
+        
     def updateConfig(self):
-        params = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.recursePatternBox, self.splitBox]
+        params = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.recursePatternBox, self.splitBox, self.individualBox]
         self.configDct = {}
         for p in params:
             self.configDct[p.objectName()] = [p,self.getValue(p)]
@@ -271,6 +307,14 @@ class Ui_MainWindow(object):
             widget.setText(value)
         elif isinstance(widget,QtWidgets.QSpinBox):
             widget.setValue(int(value))
+        elif isinstance(widget,QtWidgets.QCheckBox):
+            match value:
+                case 'True':
+                    value = True
+                case 'False':
+                    value = False
+            widget.setChecked(value)
+            
 
     def readConfigFile(self):
         f=open(self.configFile,'r')
@@ -293,6 +337,7 @@ class Ui_MainWindow(object):
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
         split = self.splitBox.value()
+        individual = self.individualBox.isChecked()
         outdir = 'average'#self.outdirBox.text()
         if not outdir:
             outdir = 'average'
@@ -308,10 +353,10 @@ class Ui_MainWindow(object):
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
-                self.startWorker(direc,poni,mask,gainFile,dirpattern, split, outdir)
+                self.startWorker(direc,poni,mask,gainFile,dirpattern, split, outdir, individual = individual)
                 #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
-                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir)
+                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir, individual=individual)
                 print('finished')
                 
         except IndexError:
@@ -321,10 +366,10 @@ class Ui_MainWindow(object):
             print(e)
             return
         
-    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split, outdir):
+    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split, outdir, individual):
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir)
+        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir, individual= individual)
         self.thread.start()
 
     def stopWorker(self):

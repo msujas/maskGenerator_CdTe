@@ -23,7 +23,7 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False):
+def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False, individual = True):
     subdir = f'xye_{stdevs}stdev/'
     if stop:
         return
@@ -46,8 +46,9 @@ def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badF
                 if n == 4:
                     raise OSError(e)
                 time.sleep(1)
-        print('\nintegrating individual images')
-        integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
+        if individual:
+            print('\nintegrating individual images')
+            integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
                             gainFile=gainFile)
 
 def rundirSetup(root, basedir,dest,   fileList = None, split = None):
@@ -83,13 +84,13 @@ def rundirSetup(root, basedir,dest,   fileList = None, split = None):
     return cbfs, outfolder, splitval, badFramesLog,  fileList, runDirec
 
 def rundir(root, basedir,dest,poni,mask,gainFile, runningFull:bool,  fileList = None, split = None, 
-           outdir = 'average', stop = False):
+           outdir = 'average', stop = False, individual = True):
 
     cbfs, outfolder, splitval, badFramesLog, fileList, runDirec = rundirSetup(root=root, basedir=basedir,dest=dest, 
                                                                              fileList = fileList, split = split)
     
     if runDirec:
-        runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop)
+        runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop, individual=individual)
         runningFull = True
     return fileList, runningFull
 
