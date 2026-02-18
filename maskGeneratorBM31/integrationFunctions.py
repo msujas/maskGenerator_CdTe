@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, re
 from cryio.cbfimage import CbfImage, CbfHeader
+from glob import glob
+import pyFAI
 
 def gainCorrection(avim,gainArray):
     avimGain = avim/gainArray
@@ -23,6 +25,7 @@ def clearPyFAI_header(file):
     
 def bubbleHeader(file2d,array2d, tth, eta):
     header = {
+    #'Bubble_cake_version' : 2,
     'Bubble_cake' : f'{tth[0]} {tth[-1]} {eta[0]} {eta[-1]}',
     'Bubble_normalized': 1 
     }
@@ -70,6 +73,8 @@ def makeDataSet(files : list, badFramesLog : str, scale = 10**9, doMonitor = Tru
 def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
     maskdct = {}
     #maskarray = np.zeros(shape=dataset.shape)
+    if isinstance(baseMask,str):
+        baseMask = fabio.open(baseMask).data
     median = np.median(dataset,axis=2)
     stdev = np.std(dataset,axis = 2)
     for c,file in enumerate(files):
@@ -85,6 +90,12 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             ax[1].imshow(array,vmax = vmax)
             plt.show()
     return maskdct
+
+def getAvFiles(direc, outdir = 'average'):
+    files= glob(f'{direc}/*.cbf')
+    basefilename = os.path.basename(files[-1])
+    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
+    return f'{direc}/{outdir}/{shortbasename}_average.cbf', f'{direc}/{outdir}/{shortbasename}_average_gainCorrected.cbf'
 
 def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='average', unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
     '''
@@ -103,7 +114,9 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='aver
     creates and average image, with each image masked individually. Integrates the average with and without gain correction
     no returned variable
     '''
-    if shortbasename == None:
+    if isinstance(poni,str):
+        poni = pyFAI.load(poni)
+    if not shortbasename:
         basefilename = os.path.basename(files[-1])
         shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
 
@@ -164,7 +177,8 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, av
 
     integrates each image in dataset with it's own mask, with and without gain correction, then averages the integrated patterns at the end.
     '''
-
+    if isinstance(poni,str):
+        poni = pyFAI.load(poni)
     while subdir[-1] == '/' or subdir[-1] == '\\':
         subdir = subdir[:-1]
     subdirGain = f'{subdir}_gainCorr'
@@ -220,3 +234,11 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, av
         np.savetxt(f'{dest}/{subdirGain}/average/qav.xy',np.array([xg,qavg]).transpose())
     
     
+def runAll(direc, poni, mask, gainfile, scale = 10**9, individual=False):
+    badframelog= f'{direc}/badFrames.log'
+    files = glob(f'{direc}/*.cbf')
+    dataset, usedFiles = makeDataSet(files,badframelog, scale=scale)
+    maskDct= makeMasks(dataset, usedFiles, mask)
+    integrateAverage(dataset,usedFiles, dest=direc, poni=poni, gainFile=gainfile, maskdct=maskDct)
+    if individual:
+        integrateIndividual(dataset,usedFiles, direc,'xye', poni, maskDct, gainfile)
