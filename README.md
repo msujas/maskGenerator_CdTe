@@ -1,4 +1,4 @@
-Most of functionality now integrated into Bubble (v. 4.3.0, cosmic masking from image stack and gain correction), so you can use that instead. https://soft.snbl.eu/bubble/bubble.html
+Most of functionality now integrated into Bubble (v. 4.3.0, cosmic masking from image stack and gain correction), so you can use that instead. https://soft.snbl.eu/bubble/bubble.html (NB. Bubble currently has a bug where it's not monitor normalising when applying the cosmic masking).
 
 Scripts and programs for cosmic masking, integration and gain map correction for BM31 total scattering data on the Pilatus 2M CdTe detector. Requires a stack of images (~10 or more) to determine where the cosmics are by a statistical approach.
 
