@@ -23,13 +23,16 @@ def clearPyFAI_header(file):
     x,y,e = np.loadtxt(file,unpack = True, comments = '#')
     np.savetxt(file,np.array([x,y,e]).transpose(), '%.6f')
     
-def bubbleHeader(file2d,array2d, tth, eta):
+def bubbleHeader(file2d,array2d, tth, eta, y, e):
+    xye = np.array([tth,y,e]).transpose().flatten()
+    xyestring = ' '.join([str(i) for i in xye])
     header = {
-    #'Bubble_cake_version' : 2,
+    'Bubble_cake_version' : 3,
     'Bubble_cake' : f'{tth[0]} {tth[-1]} {eta[0]} {eta[-1]}',
-    'Bubble_normalized': 1 
+    'Bubble_normalized': 1 ,
+    'Bubble_pattern': xyestring
     }
-    f = fabio.edfimage.EdfImage(data = array2d.transpose(), header = header)
+    f = fabio.edfimage.EdfImage(data = array2d[::-1,:], header = header)
     f.write(file2d)
 
 def appendBadFrames(badFramesLog,file):
@@ -148,17 +151,17 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='aver
     np.savetxt(outfile,np.array([x,y,e]).transpose(), fmt="%.6f")
     result = poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = polF,unit = unit,
                     correctSolidAngle = True, method = 'bbox',npt_rad = npt, npt_azim = nptA, error_model = 'poisson', safe = False)
-    bubbleHeader(outfile_2d,*result[:3])
+    bubbleHeader(outfile_2d,*result[:3], y, e)
 
     if gainFile != None:
         outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
-        poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
+        x,y,e = poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
         outfileGC_2d = outfileGC.replace('.xye','.edf')
         result = poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
         clearPyFAI_header(outfileGC)
-        bubbleHeader(outfileGC_2d,*result[:3])
+        bubbleHeader(outfileGC_2d,*result[:3], y, e)
 
 def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, avdir = 'average', unit = '2th_deg', npt = 5000, polF = 0.99):
     '''
@@ -202,10 +205,6 @@ def integrateIndividual(dataset,files, dest, subdir, poni, maskdct, gainFile, av
             xg,yg,eg = poni.integrate1d(data = arrayGC, filename = outputfileGC,mask = maskdct[c],polarization_factor = polF,unit = unit,
                             correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
             clearPyFAI_header(outputfileGC)
-
-        
-        
-
 
         if c == 0:
             av1d = np.empty(shape = (len(y),len(files)))
