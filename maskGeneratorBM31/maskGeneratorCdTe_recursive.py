@@ -23,7 +23,8 @@ scale = 1e9
 doMonitor = True
 folderPattern = 'pdf' #pattern to search for somewhere in the directory name
 
-def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False, individual = True):
+def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir, stop = False, individual = True,
+             polF = 0.99):
     subdir = f'xye_{stdevs}stdev/'
     if stop:
         return
@@ -40,7 +41,7 @@ def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badF
         for n in range(5):
             try:
                 print('\nmaking and integrating average image')
-                integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir)
+                integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir, polF=polF)
                 break
             except OSError as e:
                 if n == 4:
@@ -49,7 +50,7 @@ def runSplit(root, stdevs, cbfs, poni, mask, gainFile, outfolder, splitval, badF
         if individual:
             print('\nintegrating individual images')
             integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
-                            gainFile=gainFile)
+                            gainFile=gainFile, polF=polF)
 
 def rundirSetup(root, basedir,dest,   fileList = None, split = None):
     if not fileList:
@@ -84,13 +85,13 @@ def rundirSetup(root, basedir,dest,   fileList = None, split = None):
     return cbfs, outfolder, splitval, badFramesLog,  fileList, runDirec
 
 def rundir(root, basedir,dest,poni,mask,gainFile, runningFull:bool,  fileList = None, split = None, 
-           outdir = 'average', stop = False, individual = True):
+           outdir = 'average', stop = False, individual = True, polF = 0.99):
 
     cbfs, outfolder, splitval, badFramesLog, fileList, runDirec = rundirSetup(root=root, basedir=basedir,dest=dest, 
                                                                              fileList = fileList, split = split)
     
     if runDirec:
-        runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop, individual=individual)
+        runSplit(root, 3, cbfs, poni, mask, gainFile, outfolder, splitval, badFramesLog, outdir=outdir, stop = stop, individual=individual,polF=polF)
         runningFull = True
     return fileList, runningFull
 

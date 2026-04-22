@@ -19,7 +19,7 @@ import fabio
 from glob import glob
 
 class Worker(QtCore.QThread):
-    def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average', individual = True):
+    def __init__(self,direc,poni, mask,gainFile,recursePattern, split, outdir='average', individual = True, polF = 0.9):
         super(Worker,self).__init__()
         self.direc = direc
         self.poni = pyFAI.load(poni)
@@ -29,6 +29,7 @@ class Worker(QtCore.QThread):
         self.split = split
         self.outdir = outdir
         self.individual = individual
+        self.polF = polF
     def run(self):
         self.running = True
         fileList = []
@@ -46,7 +47,8 @@ class Worker(QtCore.QThread):
                 try:
                     fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root=root,basedir = self.direc,dest=self.direc,poni=self.poni,
                                                                                mask = self.mask,gainFile=self.gainFile, runningFull=runningFull,
-                                                                                fileList=fileList,split= self.split, outdir = self.outdir, individual=self.individual)
+                                                                                fileList=fileList,split= self.split, outdir = self.outdir, individual=self.individual,
+                                                                                polF=self.polF)
                 except OSError as e:
                     print(e)
                     print('stopping')
@@ -208,6 +210,23 @@ class Ui_MainWindow(object):
         self.individualBox.setChecked(True)
         self.individualBox.setText('integrate individual files')
         self.grid.addWidget(self.individualBox, 5,0)
+
+        self.polgrid = QtWidgets.QHBoxLayout()
+        self.polarisationFactorBox = QtWidgets.QDoubleSpinBox()
+        self.polarisationFactorBox.setMinimum(0)
+        self.polarisationFactorBox.setMaximum(1)
+        self.polarisationFactorBox.setDecimals(2)
+        self.polarisationFactorBox.setValue(0.9)
+        self.polarisationFactorBox.setSingleStep(0.01)
+        self.polarisationFactorBox.setObjectName('polarisationFactorBox')
+        self.polgrid.addWidget(self.polarisationFactorBox)
+        
+        self.polLabel = QtWidgets.QLabel()
+        self.polLabel.setObjectName('polLabel')
+        self.polLabel.setText('polarisation\nfactor')
+        self.polgrid.addWidget(self.polLabel)
+
+        self.grid.addLayout(self.polgrid,6,0)
         
         self.centralwidget.setLayout(self.grid)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -282,13 +301,14 @@ class Ui_MainWindow(object):
     def getValue(self,widget):
         if isinstance(widget, QtWidgets.QLineEdit):
             return widget.text()
-        elif isinstance(widget,QtWidgets.QSpinBox):
+        elif isinstance(widget,QtWidgets.QSpinBox) or isinstance(widget, QtWidgets.QDoubleSpinBox):
             return widget.value()
         elif isinstance(widget, QtWidgets.QCheckBox):
             return widget.isChecked()
         
     def updateConfig(self):
-        params = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.recursePatternBox, self.splitBox, self.individualBox]
+        params = [self.directoryBox, self.poniBox, self.maskBox, self.gainMapBox, self.recursePatternBox, self.splitBox, self.individualBox, 
+                  self.polarisationFactorBox]
         self.configDct = {}
         for p in params:
             self.configDct[p.objectName()] = [p,self.getValue(p)]
@@ -338,6 +358,7 @@ class Ui_MainWindow(object):
         gainFile = self.gainMapBox.text()
         split = self.splitBox.value()
         individual = self.individualBox.isChecked()
+        polF = self.polarisationFactorBox.value()
         outdir = 'average'#self.outdirBox.text()
         if not outdir:
             outdir = 'average'
@@ -353,10 +374,10 @@ class Ui_MainWindow(object):
         try:
             if self.recurseBox.isChecked():
                 dirpattern = self.recursePatternBox.text()
-                self.startWorker(direc,poni,mask,gainFile,dirpattern, split, outdir, individual = individual)
+                self.startWorker(direc,poni,mask,gainFile,dirpattern, split, outdir, individual = individual, polF=polF)
                 #maskGeneratorCdTe_recursive.run(direc,dest,poni,mask,gainFile, dirpattern)
             else:
-                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir, individual=individual)
+                maskGeneratorIntegraterCdTe.run(direc,dest,poni,mask,gainFile, split=split, outdirav=outdir, individual=individual, polF=polF)
                 print('finished')
                 
         except IndexError:
@@ -366,10 +387,10 @@ class Ui_MainWindow(object):
             print(e)
             return
         
-    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split, outdir, individual):
+    def startWorker(self, direc, poni,mask,gainFile,recursePattern, split, outdir, individual, polF):
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir, individual= individual)
+        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir, individual= individual,polF=polF)
         self.thread.start()
 
     def stopWorker(self):

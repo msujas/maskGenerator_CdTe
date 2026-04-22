@@ -17,7 +17,7 @@ mask  = r'Z:\visitor\a311217\bm31\20240129\pylatus/pdfMask.edf' # Mask file
 gainFile = r'Z:\visitor\a311217\bm31\20240129\pylatus\gainmap\gainMap_thr30keV_filtered_kpm_2024-02-01.edf'
 split = None
 
-def run(direc,dest,poni,mask,gainFile, split = None, outdirav = 'average', individual = True):
+def run(direc,dest,poni,mask,gainFile, split = None, outdirav = 'average', individual = True, polF=0.99):
     os.chdir(direc)
     if not os.path.exists(dest):
         os.makedirs(dest)
@@ -51,10 +51,10 @@ def run(direc,dest,poni,mask,gainFile, split = None, outdirav = 'average', indiv
             os.makedirs(f'{dest}/average/xye/')
 
         print('\nmaking and integrating average images\n')
-        integrateAverage(dataset, usedFiles, dest, poni, gainFile, maskdct, outdir=outdirav)
+        integrateAverage(dataset, usedFiles, dest, poni, gainFile, maskdct, outdir=outdirav, polF=polF)
         if individual:
             print('\nintegrating individual images\n')
-            integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainFile)
+            integrateIndividual(dataset,usedFiles, dest, subdir, poni, maskdct, gainFile,polF=polF)
     
 if __name__ == '__main__':
     run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile, split=split)
