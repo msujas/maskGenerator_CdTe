@@ -100,7 +100,8 @@ def getAvFiles(direc, outdir = 'average'):
     shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
     return f'{direc}/{outdir}/{shortbasename}_average.cbf', f'{direc}/{outdir}/{shortbasename}_average_gainCorrected.cbf'
 
-def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='average', unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99, shortbasename = None):
+def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='average', unit = '2th_deg', npt = 5000, nptA = 360, 
+                     polF = 0.99, shortbasename = None):
     '''
     arguments: dataset, files, dest, poni, gainFile, maskdct, unit = '2th_deg', npt = 5000, nptA = 360, polF = 0.99
     dataset - array containing individual diffraction images, shape = (y image size, x image size, number of images)
