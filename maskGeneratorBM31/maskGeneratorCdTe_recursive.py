@@ -9,22 +9,8 @@ from pathlib import Path
 import time
 from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
 
-
-direc = r'X:\users\a311207\20231204'
-homedir = str(Path.home())
-
-dest = direc.replace(r'X:\users\a311207\20231204',fr'Z:\visitor\a311207\bm31\20231204\pylatus')
-poni = r'X:\users\a311207\20231204/Si_0_15tilt.poni'
-mask = r'X:\users\a311207\20231204\dtx0_dtr15_baseMask_lines.edf'
-gainFile =  r'X:\users\a311207\20231204/calculatedGainMap_48p6keV_kpm_filtered.edf'
-avdir = 'average'
-stdevs = 3
-scale = 1e9
-doMonitor = True
-folderPattern = 'pdf' #pattern to search for somewhere in the directory name
-
 class RecursiveIntegrator():
-    def __init__(self, root, stdevs, poni, mask, gainfile, dest, splitval=0):
+    def __init__(self, root, stdevs, poni, mask, gainfile, dest, splitval=0, polF = 0.85, avdir = 'average'):
         self.root = root
         self.stdevs = stdevs
         self.poni=poni
@@ -32,18 +18,17 @@ class RecursiveIntegrator():
         self.gainfile=gainfile
         self.outfolder=dest
         self.splitval=splitval
+        self.polF=polF
+        self.avdir = avdir
+
         self.cbfs = glob(f'{root}/*.cbf')
         
         if not self.splitval:
             self.splitval = len(self.cbfs)
         self.filelist= []
 
-
-        
-
-    def runSplit(self, stdevs,  poni, mask, gainFile, outfolder, badFramesLog, outdir, stop = False, individual = True,
-                polF = 0.85):
-        subdir = f'xye_{stdevs}stdev/'
+    def runSplit(self, outfolder, badFramesLog, outdir, stop = False, individual = True,scale=10**9, doMonitor=True):
+        subdir = f'xye_{self.stdevs}stdev/'
         if stop:
             return
         for i in range(math.ceil(len(self.cbfs)/self.splitval)):
@@ -54,12 +39,12 @@ class RecursiveIntegrator():
                 print(f'no monitor for {self.root}')
                 continue
             print('\nmaking masks')
-            masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = mask, nstdevs = 3)
+            masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = self.mask, nstdevs = 3)
             
             for n in range(5):
                 try:
                     print('\nmaking and integrating average image')
-                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=poni, gainFile= gainFile, maskdct= masks, outdir = outdir, polF=polF)
+                    integrateAverage(dataset, files = usedFiles, dest = outfolder, poni=self.poni, gainFile= self.gainfile, maskdct= masks, outdir = outdir, polF=self.polF)
                     break
                 except OSError as e:
                     if n == 4:
@@ -67,8 +52,8 @@ class RecursiveIntegrator():
                     time.sleep(1)
             if individual:
                 print('\nintegrating individual images')
-                integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = avdir,  poni = poni, maskdct= masks, 
-                                gainFile=gainFile, polF=polF)
+                integrateIndividual(dataset,files = usedFiles, dest = outfolder, subdir = subdir, avdir = self.avdir,  poni = self.poni, maskdct= masks, 
+                                gainFile= self.gainfile, polF=self.polF)
 
     def rundirSetup(self,root):
 
@@ -126,8 +111,3 @@ class RecursiveIntegrator():
             time.sleep(1)
             if runningFull:
                 print('looking for new files')
-
-
-if __name__ == '__main__':
-    run(direc=direc,dest=dest,poni=poni,mask=mask,gainFile=gainFile, folderPattern=folderPattern)    
-     
