@@ -154,7 +154,7 @@ def integrateAverage(dataset, files, dest, poni, gainFile, maskdct, outdir='aver
     bubbleHeader(outfile_2d,*result[:3], y, e)
 
     if gainFile != None:
-        outfileGC = f'{dest}/average/xye/{shortbasename}_average_gainCorrected.xye'
+        outfileGC = f'{dest}/{outdir}/xye/{shortbasename}_average_gainCorrected.xye'
         x,y,e = poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = polF,unit = unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
         outfileGC_2d = outfileGC.replace('.xye','.edf')
