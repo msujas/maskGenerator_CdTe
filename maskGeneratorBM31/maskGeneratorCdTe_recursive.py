@@ -21,7 +21,6 @@ class RecursiveIntegrator():
         self.polF=polF
         self.avdir = avdir
 
-        self.cbfs = glob(f'{root}/*.cbf')
         
         if not self.splitval:
             self.splitval = len(self.cbfs)
@@ -59,14 +58,14 @@ class RecursiveIntegrator():
 
         #if avdir in root or 'badFrames' in root or folderPattern not in root:
         #    return
-        cbfs = glob(f'{root}/*.cbf')
+        self.cbfs = glob(f'{root}/*.cbf')
         
         #if len(cbfs) == 0:
         #    return
-        cbfs.sort()
+        self.cbfs.sort()
         runDirec = False
 
-        for cbf in cbfs:
+        for cbf in self.cbfs:
             if not cbf in self.filelist:
                 self.filelist.append(cbf)
                 runDirec = True
@@ -76,12 +75,12 @@ class RecursiveIntegrator():
         
         #subdir = f'xye_{stdevs}stdev/'
 
-        return cbfs, runDirec
+        return runDirec
 
     def rundir(self,root, basedir,dest,poni,mask,gainFile, runningFull:bool,  split = None, 
             outdir = 'average', stop = False, individual = True, polF = 0.99):
 
-        cbfs,   runDirec = self.rundirSetup(root=root, basedir=basedir,dest=dest, 
+        runDirec = self.rundirSetup(root=root, basedir=basedir,dest=dest, 
                                             split = split)
         
         if runDirec:
