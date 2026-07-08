@@ -99,7 +99,7 @@ def averagefiles(basemask,pattern = '*.cbf'):
     dirname = os.path.dirname(files[0])
     dataset, usedfiles = makeDataSet(files,f'{dirname}/badframes.log')
     masks = makeMasks(dataset, usedfiles, basemask)
-    for i in dataset.shape[2]:
+    for i in range(dataset.shape[2]):
         dataset[:,:,i] = np.where(masks[i] >0, np.nan, dataset[:,:,i])
     av = np.nanmean(dataset, axis=2)
     av = np.where(np.isnan(av),-1, av)
