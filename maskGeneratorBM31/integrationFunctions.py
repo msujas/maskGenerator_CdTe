@@ -96,7 +96,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
 
 def averagefiles(basemask,pattern = '*.cbf'):
     files = glob(pattern)
-    dirname = os.path.dirname(files[0])
+    dirname = os.path.dirname(os.path.abspath(files[0]))
     dataset, usedfiles = makeDataSet(files,f'{dirname}/badframes.log')
     masks = makeMasks(dataset, usedfiles, basemask)
     for i in range(dataset.shape[2]):
