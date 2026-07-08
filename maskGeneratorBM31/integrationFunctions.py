@@ -94,6 +94,24 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
+def averagefiles(basemask,pattern = '*.cbf'):
+    files = glob(pattern)
+    dirname = os.path.dirname(files[0])
+    dataset, usedfiles = makeDataSet(files,f'{dirname}/badframes.log')
+    masks = makeMasks(dataset, usedfiles, basemask)
+    for i in dataset.shape[2]:
+        dataset[:,:,i] = np.where(masks[i] >0, np.nan, dataset[:,:,i])
+    av = np.nanmean(dataset, axis=2)
+    av = np.where(np.isnan(av),-1, av)
+    avdir = f'{dirname}/average'
+    os.makedirs(avdir,exist_ok=True)
+    im = CbfImage()
+    im.array = av
+    im.header['Flux'] = 1
+    basefilename = os.path.basename(files[-1])
+    shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
+    im.save_cbf(f'{avdir}/{shortbasename}.cbf')
+
 def getAvFiles(direc, outdir = 'average'):
     files= glob(f'{direc}/*.cbf')
     basefilename = os.path.basename(files[-1])
