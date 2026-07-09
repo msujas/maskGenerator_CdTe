@@ -19,6 +19,7 @@ classifiers = [
 [project.scripts]
 imagin = "maskGeneratorBM31.maskGeneratorIntegratorGUI:main"
 azimagin = "maskGeneratorBM31.azimuthGui:main"
+averagefiles =  "maskGeneratorBM31.integrationFunctions:averagefilescli"
 
 [tool.setuptools]
 packages = ["maskGeneratorBM31"]

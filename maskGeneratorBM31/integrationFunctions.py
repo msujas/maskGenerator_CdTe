@@ -6,6 +6,7 @@ import os, re
 from cryio.cbfimage import CbfImage, CbfHeader
 from glob import glob
 import pyFAI
+import argparse
 
 def gainCorrection(avim,gainArray):
     avimGain = avim/gainArray
@@ -94,7 +95,7 @@ def makeMasks(dataset, files, baseMask, nstdevs = 3, plot = False):
             plt.show()
     return maskdct
 
-def averagefiles(basemask,pattern = '*.cbf'):
+def averagefiles(basemask,pattern = '*.cbf', flatfield=None):
     files = glob(pattern)
     dirname = os.path.dirname(os.path.abspath(files[0]))
     dataset, usedfiles = makeDataSet(files,f'{dirname}/badframes.log')
@@ -111,6 +112,29 @@ def averagefiles(basemask,pattern = '*.cbf'):
     basefilename = os.path.basename(files[-1])
     shortbasename = re.sub('_[0-9][0-9][0-9][0-9]p','',basefilename).replace('.cbf','')
     im.save_cbf(f'{avdir}/{shortbasename}.cbf')
+    if flatfield:
+        ff:np.ndarray = fabio.open(flatfield).data
+        avgc = gainCorrection(av,ff)
+        imgc = CbfImage()
+        imgc.array = avgc
+        imgc.header['Flux'] = 1
+        imgc.save(f'{avdir}/{shortbasename}GC.cbf')
+    return av
+
+def averagefilescli():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-m','--mask', type=str, default=None, help='maskfile used for averageing')
+    ap.add_argument('-fp','--filepattern', type = str, help = 'pattern used to search file (default "*.cbf")', default='*.cbf')
+    ap.add_argument('-ff','--flatfield', type=str, default=None, help='flat field (gain map) file used to correct image')
+    args = ap.parse_args()
+    mask = args.mask
+    fp = args.filepattern
+    fffile = args.flatfield
+    averagefiles(mask, fp, fffile)
+
+
+
+
 
 def getAvFiles(direc, outdir = 'average'):
     files= glob(f'{direc}/*.cbf')
