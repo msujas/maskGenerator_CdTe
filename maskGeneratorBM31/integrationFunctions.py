@@ -10,7 +10,7 @@ import argparse
 
 def gainCorrection(avim,gainArray):
     avimGain = avim/gainArray
-    avimGain = np.where(gainArray <0, -1, avimGain)
+    avimGain = np.where(np.bitwise_or(gainArray <0, avim<0), -1, avimGain)
     return avimGain
 
 def gainCorrectionFiles(cbfFile, gainFile):
