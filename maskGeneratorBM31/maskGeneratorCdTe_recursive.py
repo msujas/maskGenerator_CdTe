@@ -7,10 +7,10 @@ import os
 import math
 from pathlib import Path
 import time
-from maskGeneratorBM31 import  makeDataSet, integrateAverage, integrateIndividual, makeMasks
+from maskGeneratorBM31 import  Integrator
 
 class RecursiveIntegrator():
-    def __init__(self, direc, stdevs, poni, mask, gainfile, basedir, dest=None, saveindividual=True, splitval=0, polF = 0.85, avdir = 'average',
+    def __init__(self, direc, stdevs, poni, mask, gainfile,  dest=None, saveindividual=True, splitval=0, polF = 0.85, avdir = 'average',
                  folderpattern=''):
         self.direc = direc
         self.stdevs = stdevs
@@ -18,8 +18,7 @@ class RecursiveIntegrator():
         self.mask=mask
         self.gainfile=gainfile
         if not dest:
-            dest = basedir
-        self.basedir = basedir
+            dest = direc
         self.dest=dest
         self.splitval=splitval
         self.polF=polF
@@ -28,11 +27,11 @@ class RecursiveIntegrator():
         self.saveindividual=saveindividual
         self.folderpattern=folderpattern
         self.running = True
+        self.integrator = Integrator(self.direc, self.mask, self.poni, self.gainfile, self.polF, avdir=avdir)
 
-    def runSplit(self, root:str,  stop = False, scale=10**9, doMonitor=True):
+    def runSplit(self, root:str, scale=10**9, doMonitor=True):
         subdir = f'xye_{self.stdevs}stdev/'
-        badFramesLog = f'{root}/badframes.log'
-        if stop:
+        if not self.running:
             return
         if not self.splitval:
             splitval = len(self.cbfs)
@@ -40,19 +39,19 @@ class RecursiveIntegrator():
             splitval = self.splitval
         for i in range(math.ceil(len(self.cbfs)/splitval)):
             cbfstemp = self.cbfs[i*splitval:(i+1)*splitval]
-            dataset, usedFiles = makeDataSet(cbfstemp,  badFramesLog, scale = scale, doMonitor = doMonitor)
+            self.integrator.files = cbfstemp
+            self.integrator.makeDataSet(scale = scale, doMonitor = doMonitor)
 
-            if np.any(dataset) == False:
+            if np.any(self.integrator.dataset) == False:
                 print(f'no monitor for {root}')
                 continue
             print('\nmaking masks')
-            masks = makeMasks(dataset = dataset,files =  usedFiles, baseMask = self.mask, nstdevs = 3)
+            self.integrator.makeMasks()
             
             for n in range(5):
                 try:
                     print('\nmaking and integrating average image')
-                    savedir = root.replace(self.basedir,self.dest)
-                    integrateAverage(dataset, files = usedFiles, dest = savedir, poni=self.poni, gainFile= self.gainfile, maskdct= masks, outdir = self.avdir, polF=self.polF)
+                    self.integrator.integrateAverage()
                     break
                 except OSError as e: #if file not on network yet
                     if n == 4:
@@ -60,8 +59,7 @@ class RecursiveIntegrator():
                     time.sleep(1)
             if self.saveindividual:
                 print('\nintegrating individual images')
-                integrateIndividual(dataset,files = usedFiles, dest = self.dest, subdir = subdir, avdir = self.avdir,  poni = self.poni, maskdct= masks, 
-                                gainFile= self.gainfile, polF=self.polF)
+                self.integrator.integrateIndividual(subdir = subdir)
 
     def rundirSetup(self,root):
         self.cbfs = glob(f'{root}/*.cbf')
@@ -75,10 +73,10 @@ class RecursiveIntegrator():
 
         return runDirec
 
-    def rundir(self,root, stop = False):
+    def rundir(self,root):
         runDirec = self.rundirSetup(root=root)
         if runDirec:
-            self.runSplit(root, stop = stop)
+            self.runSplit(root)
             self.runningFull = True
 
     def run(self):
