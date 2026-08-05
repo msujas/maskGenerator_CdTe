@@ -33,32 +33,13 @@ class Worker(QtCore.QThread):
     def run(self):
         self.running = True
         fileList = []
+        self.r = maskGeneratorCdTe_recursive.RecursiveIntegrator(direc=self.direc,stdevs=3, poni=self.poni, mask=self.mask,gainfile=self.gainFile,
+                                                            basedir=self.direc,saveindividual=self.individual, splitval=self.split, polF=self.polF,
+                                                            folderpattern=self.recursePattern)
         
-        while self.running:
-            runningFull = False
-            for root, dirs, files in os.walk(self.direc):
-                if not self.running:
-                    #print('stopping')
-                    return
-                if len(glob(f'{root}/*.cbf')) == 0:
-                    continue
-                if not self.recursePattern in root or self.outdir in root:
-                    continue
-                try:
-                    fileList, runningFull = maskGeneratorCdTe_recursive.rundir(root=root,basedir = self.direc,dest=self.direc,poni=self.poni,
-                                                                               mask = self.mask,gainFile=self.gainFile, runningFull=runningFull,
-                                                                                fileList=fileList,split= self.split, outdir = self.outdir, individual=self.individual,
-                                                                                polF=self.polF)
-                except OSError as e:
-                    print(e)
-                    print('stopping')
-                    self.stop()
-                    return
-            time.sleep(1)
-            if runningFull:
-                print('looking for new files')
+        self.r.runLoop()
     def stop(self):
-        self.running = False
+        self.r.running = False
         #self.terminate()
 
 class Ui_MainWindow(object):
