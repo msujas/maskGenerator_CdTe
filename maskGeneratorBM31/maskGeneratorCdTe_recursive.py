@@ -10,16 +10,13 @@ import time
 from maskGeneratorBM31 import  Integrator
 
 class RecursiveIntegrator():
-    def __init__(self, direc, stdevs, poni, mask, gainfile,  dest=None, saveindividual=True, splitval=0, polF = 0.85, avdir = 'average',
+    def __init__(self, direc, stdevs, poni, mask, gainfile,   saveindividual=True, splitval=0, polF = 0.85, avdir = 'average',
                  folderpattern=''):
         self.direc = direc
         self.stdevs = stdevs
         self.poni=poni
         self.mask=mask
         self.gainfile=gainfile
-        if not dest:
-            dest = direc
-        self.dest=dest
         self.splitval=splitval
         self.polF=polF
         self.avdir = avdir
@@ -27,7 +24,7 @@ class RecursiveIntegrator():
         self.saveindividual=saveindividual
         self.folderpattern=folderpattern
         self.running = True
-        self.integrator = Integrator(self.direc, self.mask, self.poni, self.gainfile, self.polF, avdir=avdir)
+        
 
     def runSplit(self, root:str, scale=10**9, doMonitor=True):
         subdir = f'xye_{self.stdevs}stdev/'
@@ -82,6 +79,7 @@ class RecursiveIntegrator():
     def run(self):
         self.runningFull = False
         for root, _dirs, _files in os.walk(self.direc):
+            self.integrator = Integrator(root, self.mask, self.poni, self.gainfile, self.polF, avdir=self.avdir)
             if self.avdir in root or 'badFrames' in root or self.folderpattern not in root:
                 continue
             self.rundir(root)

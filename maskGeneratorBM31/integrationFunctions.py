@@ -170,16 +170,20 @@ class Integrator():
         
         x,y,e = self.poni.integrate1d(data = avim, filename = outfile,mask = mask_av,polarization_factor = self.polfactor,unit = self.unit,
                         correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
+        print(f'saving {outfile}')
         np.savetxt(outfile,np.array([x,y,e]).transpose(), fmt="%.6f")
+        print(f'saving {outfile_2d}')
         result = self.poni.integrate2d(data = avim, filename = outfile_2d,mask = mask_av,polarization_factor = self.polfactor,unit = self.unit,
                         correctSolidAngle = True, method = 'bbox',npt_rad = npt, npt_azim = nptA, error_model = 'poisson', safe = False)
         bubbleHeader(outfile_2d,*result[:3], y, e)
 
         if self.ffcheck:
             outfileGC = f'{self.dest}/{self.avdir}/xye/{shortbasename}_average_gainCorrected.xye'
+            print(f'saving {outfileGC}')
             x,y,e = self.poni.integrate1d(data = avimGain, filename = outfileGC,mask =mask_avGain,polarization_factor = self.polfactor,unit = self.unit,
                             correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
             outfileGC_2d = outfileGC.replace('.xye','.edf')
+            print(f'saving {outfileGC_2d}')
             result = self.poni.integrate2d(data = avimGain, filename = outfileGC_2d,mask = mask_avGain,polarization_factor = self.polfactor,unit = self.unit,
                             correctSolidAngle = True, method = 'bbox',npt_rad = npt,npt_azim = nptA, error_model = 'poisson', safe = False)
             clearPyFAI_header(outfileGC)
@@ -215,11 +219,13 @@ class Integrator():
             print(file)
             xyefile = file.replace('.cbf','.xye')
             outputfile = f'{self.dest}/{subdir}/{xyefile}'
+            print(f'saving {outputfile}')
             x,y,e = self.poni.integrate1d(data = self.dataset[:,:,c], filename = outputfile,mask = self.maskdct[c],polarization_factor = self.polfactor,unit = self.unit,
                             correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)
             np.savetxt(outputfile, np.array([x,y,e]).transpose(),fmt = "%.6f")
             if self.ffcheck:
                 outputfileGC = f'{self.dest}/{subdirGain}/{xyefile}'
+                print(f'saving {outputfileGC}')
                 arrayGC = gainCorrection(self.dataset[:,:,c],self.flatfield)
                 xg,yg,eg = self.poni.integrate1d(data = arrayGC, filename = outputfileGC,mask = self.maskdct[c],polarization_factor = self.polfactor,unit = self.unit,
                                 correctSolidAngle = True, method = 'bbox',npt = npt, error_model = 'poisson', safe = False)

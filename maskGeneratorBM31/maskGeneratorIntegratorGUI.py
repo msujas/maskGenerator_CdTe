@@ -50,6 +50,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.grid = QtWidgets.QGridLayout()
 
+        self.running = False
         self.directoryBox = QtWidgets.QLineEdit(self.centralwidget)
         self.directoryBox.setGeometry(QtCore.QRect(10, 20, 431, 20))
         self.directoryBox.setObjectName("directoryBox")
@@ -327,7 +328,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.updateConfigFile()
         print('running')
         direc = self.directoryBox.text()
-        dest = direc
         poni = self.poniBox.text()
         mask = self.maskBox.text()
         gainFile = self.gainMapBox.text()
