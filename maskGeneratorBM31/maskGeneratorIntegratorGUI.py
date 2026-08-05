@@ -367,7 +367,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.running = True
         self.runButton.setEnabled(False)
         self.stopButton.setEnabled(True)
-        self.thread = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir, individual= individual,polF=polF)
+        self.thread:Worker = Worker(direc, poni,mask,gainFile,recursePattern, split, outdir, individual= individual,polF=polF)
         self.thread.start()
 
     def stopWorker(self):
